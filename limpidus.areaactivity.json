@@ -1,0 +1,516 @@
+[{
+  "_id": {
+    "$oid": "661c65a414345bd920864a96"
+  },
+  "name": "Cozinha",
+  "description": "Responsável pela limpeza completa da cozinha.",
+  "quickTask": false,
+  "totalM2": 30,
+  "employeeId": null,
+  "headerId": "Header-1",
+  "orderBy": 3,
+  "items": [
+    {
+      "itemId": "1",
+      "name": "Limpar geladeira",
+      "orderBy": 1,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "itemId": "2",
+      "name": "Lavar pratos",
+      "orderBy": 2,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "itemId": "3",
+      "name": "Desinfetar bancadas",
+      "orderBy": 3,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    }
+  ],
+  "projectId": 1,
+  "frequency": null,
+  "updateDate": {
+    "$date": "2024-04-15T01:57:18.206Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "661c65a414345bd920864a97"
+  },
+  "name": "Banheiro",
+  "description": "Responsável pela limpeza completa do banheiro.",
+  "quickTask": false,
+  "totalM2": 50,
+  "employeeId": null,
+  "headerId": "Header-2",
+  "orderBy": 0,
+  "items": [
+    {
+      "itemId": "1",
+      "name": "Limpar espelho",
+      "orderBy": 1,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "itemId": "2",
+      "name": "Desentupir ralos",
+      "orderBy": 2,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "itemId": "3",
+      "name": "Lavar toalhas",
+      "orderBy": 3,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    }
+  ],
+  "projectId": 1,
+  "frequency": null,
+  "updateDate": {
+    "$date": "2024-04-15T01:57:18.210Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "661c65a414345bd920864a98"
+  },
+  "name": "Quarto Principal",
+  "description": "Responsável pela limpeza completa do quarto principal.",
+  "quickTask": false,
+  "totalM2": 50,
+  "employeeId": null,
+  "headerId": "Header-3",
+  "orderBy": 3,
+  "items": [
+    {
+      "itemId": "1",
+      "name": "Trocar lençóis",
+      "orderBy": 1,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "itemId": "2",
+      "name": "Aspirar carpete",
+      "orderBy": 2,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "itemId": "3",
+      "name": "Limpar janelas",
+      "orderBy": 3,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    }
+  ],
+  "projectId": 1,
+  "frequency": null,
+  "updateDate": {
+    "$date": "2024-04-15T01:57:18.221Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "661c65a414345bd920864a99"
+  },
+  "name": "Lavar pratos",
+  "description": "Realiza a aspiração de pó das salas",
+  "quickTask": true,
+  "employeeId": null,
+  "headerId": "Header-4",
+  "orderBy": 5,
+  "frequency": {
+    "type": "weekly",
+    "weekDays": [
+      2,
+      4,
+      6
+    ]
+  },
+  "items": [
+    {
+      "itemId": "1",
+      "name": "Sala de estar",
+      "orderBy": 1,
+      "frequency": null
+    },
+    {
+      "itemId": "2",
+      "name": "Sala de jantar",
+      "orderBy": 2,
+      "frequency": null
+    },
+    {
+      "itemId": "3",
+      "name": "Sala de serviço",
+      "orderBy": 3,
+      "frequency": null
+    }
+  ],
+  "projectId": 1,
+  "totalM2": 0,
+  "updateDate": {
+    "$date": "2024-04-15T01:57:18.224Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "661c65a414345bd920864a9a"
+  },
+  "name": "Passar pano",
+  "description": "Passar pano no chão",
+  "quickTask": true,
+  "employeeId": null,
+  "headerId": "Header-5",
+  "orderBy": 1,
+  "frequency": {
+    "type": "weekly",
+    "weekDays": [
+      2,
+      4,
+      6
+    ]
+  },
+  "items": [
+    {
+      "itemId": "1",
+      "name": "Sala de estar",
+      "orderBy": 1,
+      "frequency": null
+    },
+    {
+      "itemId": "2",
+      "name": "Cozinha",
+      "orderBy": 2,
+      "frequency": null
+    },
+    {
+      "itemId": "3",
+      "name": "Varanda",
+      "orderBy": 3,
+      "frequency": null
+    }
+  ],
+  "projectId": 1,
+  "totalM2": 0,
+  "updateDate": {
+    "$date": "2024-04-15T01:57:18.227Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "661c65a414345bd920864a9b"
+  },
+  "name": "Arrumar a cama",
+  "description": "Arrumar a cama",
+  "quickTask": true,
+  "employeeId": null,
+  "headerId": "Header-1",
+  "orderBy": 1,
+  "frequency": {
+    "type": "weekly",
+    "weekDays": [
+      3,
+      5
+    ]
+  },
+  "items": [
+    {
+      "itemId": "1",
+      "name": "Quarto dos pais",
+      "orderBy": 1,
+      "frequency": null
+    },
+    {
+      "itemId": "2",
+      "name": "Quarto do menino",
+      "orderBy": 2,
+      "frequency": null
+    },
+    {
+      "itemId": "3",
+      "name": "Quarto da menina",
+      "orderBy": 3,
+      "frequency": null
+    }
+  ],
+  "projectId": 1,
+  "totalM2": 0,
+  "updateDate": {
+    "$date": "2024-04-15T01:57:18.231Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "661c65a414345bd920864a9c"
+  },
+  "name": "Área de Serviço",
+  "description": "Responsável pela limpeza completa da área de serviço.",
+  "quickTask": false,
+  "totalM2": 50,
+  "employeeId": null,
+  "headerId": "Header-2",
+  "orderBy": 4,
+  "items": [
+    {
+      "itemId": "1",
+      "name": "Lavar roupas",
+      "orderBy": 1,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "itemId": "2",
+      "name": "Limpar prateleiras",
+      "orderBy": 2,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "itemId": "3",
+      "name": "Organizar produtos de limpeza",
+      "orderBy": 3,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    }
+  ],
+  "projectId": 1,
+  "frequency": null,
+  "updateDate": {
+    "$date": "2024-04-15T01:57:18.234Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "661c65a414345bd920864a9d"
+  },
+  "name": "Perfumar o local",
+  "description": "Aplicar o perfume no local.",
+  "quickTask": true,
+  "employeeId": null,
+  "headerId": "Header-3",
+  "orderBy": 2,
+  "frequency": {
+    "type": "weekly",
+    "weekDays": [
+      2,
+      6
+    ]
+  },
+  "items": [
+    {
+      "itemId": "1",
+      "name": "Sala de estar",
+      "orderBy": 1,
+      "frequency": null
+    },
+    {
+      "itemId": "2",
+      "name": "Cozinha",
+      "orderBy": 2,
+      "frequency": null
+    },
+    {
+      "itemId": "3",
+      "name": "Garagem",
+      "orderBy": 3,
+      "frequency": null
+    },
+    {
+      "itemId": "4",
+      "name": "Quarto dos pais",
+      "orderBy": 4,
+      "frequency": null
+    },
+    {
+      "itemId": "5",
+      "name": "Quarto dos filhos",
+      "orderBy": 5,
+      "frequency": null
+    }
+  ],
+  "projectId": 1,
+  "totalM2": 0,
+  "updateDate": {
+    "$date": "2024-04-15T01:57:18.238Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "661c65a414345bd920864a9e"
+  },
+  "name": "Varanda",
+  "description": "Responsável pela limpeza completa da varanda.",
+  "quickTask": false,
+  "totalM2": 50,
+  "employeeId": null,
+  "headerId": "Header-4",
+  "orderBy": 0,
+  "items": [
+    {
+      "itemId": "1",
+      "name": "Limpar móveis",
+      "orderBy": 1,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "itemId": "2",
+      "name": "Varrer o chão",
+      "orderBy": 2,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "itemId": "3",
+      "name": "Regar plantas",
+      "orderBy": 3,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    }
+  ],
+  "projectId": 1,
+  "frequency": null,
+  "updateDate": {
+    "$date": "2024-04-15T01:57:18.242Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "661c65a414345bd920864a9f"
+  },
+  "name": "Sótão",
+  "description": "Realizar a limpeza completa do sótão.",
+  "quickTask": false,
+  "totalM2": 50,
+  "employeeId": null,
+  "headerId": "Header-5",
+  "orderBy": 2,
+  "items": [
+    {
+      "itemId": "1",
+      "name": "Área de Serviço",
+      "orderBy": 1,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "itemId": "2",
+      "name": "Escritório",
+      "orderBy": 2,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    },
+    {
+      "itemId": "3",
+      "name": "Varanda",
+      "orderBy": 3,
+      "frequency": {
+        "type": "weekly",
+        "weekDays": [
+          2,
+          6
+        ]
+      }
+    }
+  ],
+  "projectId": 1,
+  "frequency": null,
+  "updateDate": {
+    "$date": "2024-04-15T01:57:18.246Z"
+  }
+}]
