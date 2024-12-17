@@ -22,10 +22,13 @@ namespace LimpidusMongoDB.Application.Services
                     var row = request.Data[i];
                     for (int j = 0; j < row.Length; j++)
                     {
-                        worksheet.Cell(_getLetterByIndex(j)+(i+1)).Value = row[j];
+                        worksheet.Cell(_getLetterByIndex(j) + (i + 1)).Value = row[j];
+                        worksheet.Cell(_getLetterByIndex(j) + (i + 1)).Style.Alignment.SetHorizontal(XLAlignmentHorizontalValues.Center);
+                        worksheet.Cell(_getLetterByIndex(j) + (i + 1)).Style.Alignment.SetVertical(XLAlignmentVerticalValues.Center);                        
                     }
                 }
 
+                worksheet.Columns().AdjustToContents();
                 workbook.SaveAs(request.Name);
 
                 return Result.Ok(data: request.Name);

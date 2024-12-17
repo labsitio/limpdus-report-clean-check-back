@@ -100,7 +100,7 @@ namespace LimpidusMongoDB.Application.Services
                 obj[2] = x.DateStart.ToString();
                 obj[3] = x.DateEnd.ToString();
                 obj[4] = x.Duration.ToString();
-                obj[5] = x.Status ? "Pendente" : "Concluído";
+                obj[5] = x.Status ? "Concluído" : "Pendente" ;
 
                 return obj;
             }).ToArray();
