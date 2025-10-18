@@ -1,3 +1,7 @@
+using LimpidusMongoDB.Api.Configurations;
+using LimpidusMongoDB.Application.Helpers;
+using System.Text.Json.Serialization;
+
 var builder = WebApplication.CreateBuilder(args);
 
 DotEnvLoader.Load();
