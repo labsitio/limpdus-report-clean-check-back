@@ -1,7 +1,3 @@
-using LimpidusMongoDB.Api.Configurations;
-using LimpidusMongoDB.Application.Helpers;
-using System.Text.Json.Serialization;
-
 var builder = WebApplication.CreateBuilder(args);
 
 DotEnvLoader.Load();
@@ -29,7 +25,10 @@ app.UseSwagger();
 app.UseSwaggerUI();
 app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthorization();
 app.UseCors();
 app.MapControllers();
