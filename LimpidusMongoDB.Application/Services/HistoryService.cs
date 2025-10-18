@@ -79,7 +79,11 @@ namespace LimpidusMongoDB.Application.Services
                     Status = x.Justification?.Information == null
                 }).ToList();
 
-                return Result.Ok(data: results);
+                return Result.Ok(data: new {
+                    data = results,
+                    departments = results.Select(x => x.Department).Distinct().ToList(),
+                    employees = results.Select(x => x.Employee).Distinct().ToList()
+                });
             }
             catch (Exception)
             {
