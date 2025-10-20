@@ -7,7 +7,7 @@ namespace LimpidusMongoDB.Application.Contracts.Responses
         public string Employee { get; set; }
         public DateTime DateStart { get; set; }
         public DateTime DateEnd { get; set; }
-        public TimeSpan Duration => DateStart - DateEnd;
+        public TimeSpan Duration => DateEnd - DateStart;
         public bool Status { get; set; }
         public JustificationResponse? Justification { get; set; }
 
