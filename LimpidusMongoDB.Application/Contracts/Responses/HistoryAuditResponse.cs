@@ -4,10 +4,11 @@ namespace LimpidusMongoDB.Application.Contracts.Responses
     {
         public string Id { get; set; }
         public string Department { get; set; }
-        public string Employee { get; set; }
+        public string EmployeeName { get; set; }
+        public string EmployeeLastName { get; set; }
         public DateTime DateStart { get; set; }
         public DateTime DateEnd { get; set; }
-        public TimeSpan Duration => DateEnd - DateStart;
+        public TimeSpan Duration => DateStart - DateEnd;
         public bool Status { get; set; }
         public JustificationResponse? Justification { get; set; }
 

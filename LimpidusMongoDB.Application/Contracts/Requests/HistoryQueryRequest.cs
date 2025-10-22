@@ -6,7 +6,8 @@ namespace LimpidusMongoDB.Application.Contracts.Requests
         public DateTime? DateStart { get; set; }
         public DateTime? DateEnd { get; set; }
         public string Department { get; set; }
-        public string Employee { get; set; }
+        public string EmployeeName { get; set; }
+        public string EmployeeLastname { get; set; }
         public bool? Status { get; set; }
     }
 }

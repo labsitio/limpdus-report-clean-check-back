@@ -55,12 +55,10 @@ namespace LimpidusMongoDB.Application.Services
                 var mongoFilter = Builders<HistoryEntity>.Filter;
                 var filter =
                     mongoFilter.Eq(x => x.ProjectId, legacyProjectId) &
-                    (mongoFilter.Lte(x => x.EndDate, query.DateEnd) & mongoFilter.Gte(x => x.CreatedDate, query.DateStart))
+                    mongoFilter.Lte(x => x.EndDate, query.DateEnd) & mongoFilter.Gte(x => x.CreatedDate, query.DateStart)
                     & (string.IsNullOrEmpty(query.Department) ? mongoFilter.Empty : mongoFilter.Regex(x => x.AreaTaskName, new MongoDB.Bson.BsonRegularExpression(query.Department)))
-                    & (string.IsNullOrEmpty(query.Employee) ? mongoFilter.Empty : mongoFilter.Or(
-                        mongoFilter.Regex(x => x.User.Name, new MongoDB.Bson.BsonRegularExpression(query.Employee)),
-                        mongoFilter.Regex(x => x.User.LastName, new MongoDB.Bson.BsonRegularExpression(query.Employee))
-                        ))
+                    & (string.IsNullOrEmpty(query.EmployeeName) ? mongoFilter.Empty : mongoFilter.Eq(x => x.User.Name, query.EmployeeName))
+                    & (string.IsNullOrEmpty(query.EmployeeLastname) ? mongoFilter.Empty : mongoFilter.Eq(x => x.User.LastName, query.EmployeeLastname))
                     & (!query.Status.HasValue ? mongoFilter.Empty :
                         (query.Status.Value ? mongoFilter.Where(y => y.Justification.Information == null) : mongoFilter.Where(y => y.Justification.Information != null)));
 
@@ -72,17 +70,18 @@ namespace LimpidusMongoDB.Application.Services
                 {
                     Id = x.Id,
                     Department = x.AreaTaskName,
-                    Employee = x.User.Name + " " + x.User.LastName,
-                    DateStart = x.CreatedDate,
-                    DateEnd = x.EndDate,
+                    EmployeeName = x.User.Name,
+                    EmployeeLastName = x.User.LastName,
+                    DateEnd = x.CreatedDate,
+                    DateStart = x.EndDate,
                     Justification = x.Justification != null ? new JustificationResponse(x.Justification?.Information, x.Justification?.Reason) : null,
                     Status = x.Justification?.Information == null
                 }).ToList();
 
-                return Result.Ok(data: new {
-                    data = results,
-                    departments = results.Select(x => x.Department).Distinct().ToList(),
-                    employees = results.Select(x => x.Employee).Distinct().ToList()
+                return Result.Ok(data: new HistoryListResponse{
+                    Data = results,
+                    Departments = results.Select(x => x.Department).Distinct().ToList(),
+                    Employees = results.Select(x => new HistoryUserResponse { Name = x.EmployeeName, LastName = x.EmployeeLastName }).Distinct().ToList()
                 });
             }
             catch (Exception)
@@ -95,14 +94,15 @@ namespace LimpidusMongoDB.Application.Services
         {
             var result = await GetByProjectIdAsync(legacyId, query, cancellationToken);
 
-            var history = (IList<HistoryAuditResponse>)result.Data;
+            var historyList = (HistoryListResponse) result.Data;
+            var history = historyList.Data;
             var arrangedData = history.Select(x =>
             {
                 string[] obj = new string[6];
                 obj[0] = x.Department;
-                obj[1] = x.Employee;
-                obj[2] = x.DateStart.ToString();
-                obj[3] = x.DateEnd.ToString();
+                obj[1] = x.EmployeeName+ " " + x.EmployeeLastName;
+                obj[2] = x.DateEnd.ToString();
+                obj[3] = x.DateStart.ToString();
                 obj[4] = x.Duration.ToString();
                 obj[5] = x.Status ? "Concluído" : "Pendente" ;
 
