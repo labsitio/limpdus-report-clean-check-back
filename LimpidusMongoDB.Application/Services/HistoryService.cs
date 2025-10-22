@@ -81,7 +81,10 @@ namespace LimpidusMongoDB.Application.Services
                 return Result.Ok(data: new HistoryListResponse{
                     Data = results,
                     Departments = results.Select(x => x.Department).Distinct().ToList(),
-                    Employees = results.Select(x => new HistoryUserResponse { Name = x.EmployeeName, LastName = x.EmployeeLastName }).Distinct().ToList()
+                    Employees = results
+                        .GroupBy(x => x.EmployeeName + " " + x.EmployeeLastName)
+                        .Select(g => new HistoryUserResponse { Name = g.First().EmployeeName, LastName = g.First().EmployeeLastName })
+                        .ToList()
                 });
             }
             catch (Exception)
