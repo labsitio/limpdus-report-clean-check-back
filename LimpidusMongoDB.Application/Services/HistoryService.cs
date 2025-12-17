@@ -50,17 +50,20 @@ namespace LimpidusMongoDB.Application.Services
                 query.DateEnd = temp;
             }
 
+            var dateStart = query.DateStart.Value.Date; // 00:00:00
+            var dateEnd = query.DateEnd.Value.Date.AddDays(1).AddTicks(-1); // 23:59:59.9999999
+
             try
             {
                 var mongoFilter = Builders<HistoryEntity>.Filter;
-                var filter =
-                    mongoFilter.Eq(x => x.ProjectId, legacyProjectId) &
-                    mongoFilter.Lte(x => x.EndDate, query.DateEnd) & mongoFilter.Gte(x => x.CreatedDate, query.DateStart)
-                    & (string.IsNullOrEmpty(query.Department) ? mongoFilter.Empty : mongoFilter.Regex(x => x.AreaTaskName, new MongoDB.Bson.BsonRegularExpression(query.Department)))
-                    & (string.IsNullOrEmpty(query.EmployeeName) ? mongoFilter.Empty : mongoFilter.Eq(x => x.User.Name, query.EmployeeName))
-                    & (string.IsNullOrEmpty(query.EmployeeLastname) ? mongoFilter.Empty : mongoFilter.Eq(x => x.User.LastName, query.EmployeeLastname))
-                    & (!query.Status.HasValue ? mongoFilter.Empty :
-                        (query.Status.Value ? mongoFilter.Where(y => y.Justification.Information == null) : mongoFilter.Where(y => y.Justification.Information != null)));
+                var filter = mongoFilter.Eq(x => x.ProjectId, legacyProjectId)
+                & mongoFilter.Lte(x => x.EndDate, dateEnd)
+                & mongoFilter.Gte(x => x.CreatedDate, dateStart)
+                & (string.IsNullOrEmpty(query.Department) ? mongoFilter.Empty : mongoFilter.Regex(x => x.AreaTaskName, new MongoDB.Bson.BsonRegularExpression(query.Department)))
+                & (string.IsNullOrEmpty(query.EmployeeName) ? mongoFilter.Empty : mongoFilter.Eq(x => x.User.Name, query.EmployeeName))
+                & (string.IsNullOrEmpty(query.EmployeeLastname) ? mongoFilter.Empty : mongoFilter.Eq(x => x.User.LastName, query.EmployeeLastname))
+                & (!query.Status.HasValue ? mongoFilter.Empty :
+                    (query.Status.Value ? mongoFilter.Where(y => y.Justification.Information == null) : mongoFilter.Where(y => y.Justification.Information != null)));
 
                 var histories = await _historyRepository.FindAsync(filter, cancellationToken);
 
@@ -78,12 +81,15 @@ namespace LimpidusMongoDB.Application.Services
                     Status = x.Justification?.Information == null
                 }).ToList();
 
-                return Result.Ok(data: new HistoryListResponse{
+                return Result.Ok(data: new HistoryListResponse
+                {
                     Data = results,
-                    Departments = results.Select(x => x.Department).Distinct().ToList(),
+                    Departments = results.Select(x => x.Department).OrderBy(x => x).Distinct().ToList(),
                     Employees = results
                         .GroupBy(x => x.EmployeeName + " " + x.EmployeeLastName)
                         .Select(g => new HistoryUserResponse { Name = g.First().EmployeeName, LastName = g.First().EmployeeLastName })
+                        .OrderBy(x => x.Name)
+                        .ThenBy(x => x.LastName)
                         .ToList()
                 });
             }
@@ -97,29 +103,29 @@ namespace LimpidusMongoDB.Application.Services
         {
             var result = await GetByProjectIdAsync(legacyId, query, cancellationToken);
 
-            var historyList = (HistoryListResponse) result.Data;
+            var historyList = (HistoryListResponse)result.Data;
             var history = historyList.Data;
             var arrangedData = history.Select(x =>
             {
                 string[] obj = new string[6];
                 obj[0] = x.Department;
-                obj[1] = x.EmployeeName+ " " + x.EmployeeLastName;
+                obj[1] = x.EmployeeName + " " + x.EmployeeLastName;
                 obj[2] = x.DateEnd.ToString();
                 obj[3] = x.DateStart.ToString();
                 obj[4] = x.Duration.ToString();
-                obj[5] = x.Status ? "Concluído" : "Pendente" ;
+                obj[5] = x.Status ? "Concluído" : "Pendente";
 
                 return obj;
             }).ToArray();
 
             var data = new string[arrangedData.Length + 1][];
-            data[0] = new [] { "Área", "Funcionário", "Início", "Conclusão", "Duração", "Status" };
+            data[0] = new[] { "Área", "Funcionário", "Início", "Conclusão", "Duração", "Status" };
             for (int i = 0; i < arrangedData.Length; i++)
             {
                 data[i + 1] = arrangedData[i];
             }
 
-            if(history.Count == 0)
+            if (history.Count == 0)
             {
                 return Result.Error(ApplicationErrors.Application_Error_General.Description());
             }
