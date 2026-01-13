@@ -115,23 +115,34 @@ namespace LimpidusMongoDB.Application.Services
                     if (!string.IsNullOrWhiteSpace(request.Id))
                     {
                         areaActivityEntity.SetObjectId(request.Id);
-                    }
-
-                    if (await _areaActivityRepository.Exists(BaseEntity.FindByIdDefinition<AreaActivityEntity>(request.Id), cancellationToken))
-                    {
-                        await _areaActivityRepository.UpdateOneAsync(request.Id, areaActivityEntity.GetUpdateDefinition(), cancellationToken);
+                        
+                        // Verifica se existe para atualizar
+                        if (await _areaActivityRepository.Exists(BaseEntity.FindByIdDefinition<AreaActivityEntity>(request.Id), cancellationToken))
+                        {
+                            await _areaActivityRepository.UpdateOneAsync(request.Id, areaActivityEntity.GetUpdateDefinition(), cancellationToken);
+                        }
+                        else
+                        {
+                            // Id informado mas não existe, insere como novo
+                            await _areaActivityRepository.InsertOneAsync(areaActivityEntity, cancellationToken);
+                        }
                     }
                     else
                     {
+                        // Id vazio = novo registro, apenas insere
                         await _areaActivityRepository.InsertOneAsync(areaActivityEntity, cancellationToken);
                     }
                 }
 
                 return Result.Ok();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return Result.Error(ApplicationErrors.Application_Error_General.Description());
+                // Retorna a mensagem de erro real para facilitar debug
+                var errorMessage = ex.InnerException != null 
+                    ? $"{ApplicationErrors.Application_Error_General.Description()}: {ex.InnerException.Message}" 
+                    : $"{ApplicationErrors.Application_Error_General.Description()}: {ex.Message}";
+                return Result.Error(errorMessage);
             }
         }
 
