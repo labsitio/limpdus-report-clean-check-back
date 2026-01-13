@@ -29,7 +29,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         /// GET para obter todos os projetos.
         /// </summary>
         /// <remarks>
-        /// Exemplo (local por enquanto) de requisição para obter todos os projetos:
+        /// Exemplo (local por enquanto) de requisiï¿½ï¿½o para obter todos os projetos:
         /// 
         ///     Request:
         ///     GET /v1/Project
@@ -77,7 +77,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         /// </summary>
         /// <param name="legacyId">Id legado do projeto</param>
         /// <remarks>
-        /// Exemplo de requisição para obter projeto por id:
+        /// Exemplo de requisiï¿½ï¿½o para obter projeto por id:
         /// 
         ///     Request:
         ///     GET /v1/Project/legacyId/{legacyId}
@@ -126,7 +126,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         /// <param name="employeeId">Id do funcionario</param>
         /// <param name="cancellationToken"></param>
         /// <remarks>
-        /// Exemplo de requisição para obter areas vinculadas ao funcionario:
+        /// Exemplo de requisiï¿½ï¿½o para obter areas vinculadas ao funcionario:
         /// 
         ///     Request:
         ///     GET /v1/Project/legacyId/{legacyId}/Employee/{employeeId}/AreaActivity
@@ -185,7 +185,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         /// </summary>
         /// <param name="id">Id do projeto</param>
         /// <remarks>
-        /// Exemplo de requisição para obter projeto por id:
+        /// Exemplo de requisiï¿½ï¿½o para obter projeto por id:
         /// 
         ///     Request:
         ///     GET /v1/Project/{id}
@@ -228,11 +228,11 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         }
 
         /// <summary>
-        /// GET para obter áreas e atividades relacionadas ao projeto
+        /// GET para obter ï¿½reas e atividades relacionadas ao projeto
         /// </summary>
         /// <param name="id">Id do projeto</param>
         /// <remarks>
-        /// Exemplo de requisição para obter areas e atividades do projeto:
+        /// Exemplo de requisiï¿½ï¿½o para obter areas e atividades do projeto:
         /// 
         ///     Request:
         ///     GET /v1/Project/{id}/AreaActivity
@@ -244,7 +244,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         ///         {
         ///           "id": "...",
         ///           "name": "Cozinha",
-        ///           "description": "Responsável pela limpeza completa da cozinha.",
+        ///           "description": "Responsï¿½vel pela limpeza completa da cozinha.",
         ///           "quickTask": false,
         ///           "totalM2": 30,
         ///           "employeeId": "...",
@@ -286,7 +286,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         /// </summary>
         /// <param name="request">Objeto com dados do projeto</param>
         /// <remarks>
-        /// Exemplo de requisição para salvar projeto:
+        /// Exemplo de requisiï¿½ï¿½o para salvar projeto:
         /// 
         ///     Request:
         ///     POST /v1/Project

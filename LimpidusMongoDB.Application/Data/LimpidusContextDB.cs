@@ -35,11 +35,15 @@ namespace LimpidusMongoDB.Application.Data
 
         protected void RegisterMap<TEntity>() where TEntity : BaseEntity
         {
-            BsonClassMap.RegisterClassMap<TEntity>(i =>
+            // Verifica se a classe já foi registrada para evitar erro de duplicação
+            if (!BsonClassMap.IsClassMapRegistered(typeof(TEntity)))
             {
-                i.AutoMap();
-                i.SetIgnoreExtraElements(true);
-            });
+                BsonClassMap.RegisterClassMap<TEntity>(i =>
+                {
+                    i.AutoMap();
+                    i.SetIgnoreExtraElements(true);
+                });
+            }
         }
 
         protected void MapClasses()

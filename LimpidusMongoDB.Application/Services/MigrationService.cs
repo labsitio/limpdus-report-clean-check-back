@@ -2,44 +2,28 @@ using LimpidusMongoDB.Application.Contracts;
 using LimpidusMongoDB.Application.Contracts.Requests;
 using LimpidusMongoDB.Application.Contracts.Responses;
 using LimpidusMongoDB.Application.Data.Entities;
-using LimpidusMongoDB.Application.Enums.Errors;
 using LimpidusMongoDB.Application.Helpers;
 using LimpidusMongoDB.Application.Services.Interfaces;
-using Microsoft.Data.SqlClient;
 
 namespace LimpidusMongoDB.Application.Services
 {
     public class MigrationService : IMigrationService
     {
         private readonly IAreaActivityService _areaActivityService;
+        private readonly ISqlServerDataAccessFactory _sqlServerDataAccessFactory;
+        private readonly IProjectService _projectService;
+        private readonly IEmployeeService _employeeService;
 
-        private const string QueryAreas = @"
-            SELECT AREA_ID, WORK_AREA_ID, AREA, METROS2, DENSIDADE, WORK_HEADER_ID 
-            FROM WORK_AREA WITH(NOLOCK)
-            WHERE WORK_HEADER_ID = @projectId 
-            ORDER BY WORK_AREA_ID";
-
-        private const string QueryTarefas = @"
-            SELECT D.TAREFA_NUMERO AS Tarefa, 
-                   D.NOME_TAREFA AS DESCRICAO, 
-                   D.PERIODO, 
-                   D.FREQUENCIA, 
-                   B.METROS2, 
-                   A.WORK_HEADER_ID, 
-                   B.WORK_AREA_ID
-            FROM WORK_HEADER A WITH(NOLOCK)
-            INNER JOIN WORK_AREA B WITH(NOLOCK)
-                ON B.WORK_HEADER_ID = A.WORK_HEADER_ID
-            INNER JOIN WORK_TAREFAS C WITH(NOLOCK)
-                ON C.WORK_AREA_ID = B.WORK_AREA_ID
-            INNER JOIN WORK_TBL_TAREFAS D WITH(NOLOCK)
-                ON D.WORK_TBL_TAREFAS_ID = C.WORK_TBL_TAREFAS_ID
-            WHERE A.WORK_HEADER_ID = @projectId
-            ORDER BY B.WORK_AREA_ID, D.TAREFA_NUMERO";
-
-        public MigrationService(IAreaActivityService areaActivityService)
+        public MigrationService(
+            IAreaActivityService areaActivityService,
+            ISqlServerDataAccessFactory sqlServerDataAccessFactory,
+            IProjectService projectService,
+            IEmployeeService employeeService)
         {
-            _areaActivityService = areaActivityService;
+            _areaActivityService = areaActivityService ?? throw new ArgumentNullException(nameof(areaActivityService));
+            _sqlServerDataAccessFactory = sqlServerDataAccessFactory ?? throw new ArgumentNullException(nameof(sqlServerDataAccessFactory));
+            _projectService = projectService ?? throw new ArgumentNullException(nameof(projectService));
+            _employeeService = employeeService ?? throw new ArgumentNullException(nameof(employeeService));
         }
 
         public async Task<Result> MigrateFromSqlServerAsync(
@@ -49,16 +33,42 @@ namespace LimpidusMongoDB.Application.Services
         {
             try
             {
-                var areas = await GetAreasFromSqlServerAsync(sqlServerConnectionString, legacyProjectId, cancellationToken);
+                var sqlServerDataAccess = _sqlServerDataAccessFactory.Create(sqlServerConnectionString);
+
+                // 1. Buscar projeto do SQL Server
+                var sqlProject = await sqlServerDataAccess.GetProjectAsync(legacyProjectId, cancellationToken);
+                if (sqlProject == null)
+                {
+                    return Result.Error($"Projeto {legacyProjectId} não encontrado no SQL Server.");
+                }
+
+                // 2. Verificar se projeto existe no MongoDB e criar/atualizar
+                var projectId = await CreateOrUpdateProjectAsync(sqlProject, cancellationToken);
+                if (string.IsNullOrWhiteSpace(projectId))
+                {
+                    return Result.Error($"Erro ao criar/atualizar projeto {legacyProjectId} no MongoDB.");
+                }
+
+                // 3. Buscar funcionários do SQL Server e criar/atualizar no MongoDB
+                var sqlEmployees = await sqlServerDataAccess.GetEmployeesAsync(legacyProjectId, cancellationToken);
+                await CreateOrUpdateEmployeesAsync(sqlEmployees, projectId, cancellationToken);
+
+                // 4. Buscar áreas e tarefas do SQL Server
+                var areas = await sqlServerDataAccess.GetAreasAsync(legacyProjectId, cancellationToken);
                 if (!areas.Any())
                 {
                     return Result.Error($"Nenhuma área encontrada para o projeto {legacyProjectId} no SQL Server.");
                 }
 
-                var tarefas = await GetTarefasFromSqlServerAsync(sqlServerConnectionString, legacyProjectId, cancellationToken);
+                var tarefas = await sqlServerDataAccess.GetTarefasAsync(legacyProjectId, cancellationToken);
                 var tarefasPorWorkAreaId = GroupTarefasByWorkAreaId(tarefas);
 
-                var areaActivityRequests = MapToAreaActivityRequests(areas, tarefasPorWorkAreaId, legacyProjectId);
+                // 5. Buscar o primeiro funcionário do projeto para atribuir ao employeeId
+                // Agora garantido que existe, pois acabamos de criar/atualizar
+                var firstEmployeeId = await GetFirstEmployeeIdFromProjectAsync(legacyProjectId, cancellationToken);
+
+                // 6. Migrar áreas
+                var areaActivityRequests = MapToAreaActivityRequests(areas, tarefasPorWorkAreaId, legacyProjectId, firstEmployeeId);
                 if (!areaActivityRequests.Any())
                 {
                     return Result.Error("Nenhuma atividade para salvar.");
@@ -72,124 +82,31 @@ namespace LimpidusMongoDB.Application.Services
                     return Result.Error($"Erro ao salvar atividades: {saveResult.Message}");
                 }
 
-                return Result.Ok(data: new
+                var resultData = new
                 {
                     areasMigrated = areaActivityRequests.Count,
                     totalItems = areaActivityRequests.Sum(a => a.Items?.Count() ?? 0),
-                    projectId = legacyProjectId
-                });
-            }
-            catch (SqlException ex)
-            {
-                return Result.Error($"Erro de conexão com SQL Server: {ex.Message}");
+                    projectId = legacyProjectId,
+                    employeesMigrated = sqlEmployees.Count,
+                    employeeIdAssigned = !string.IsNullOrWhiteSpace(firstEmployeeId),
+                    employeeId = firstEmployeeId
+                };
+
+                var message = string.IsNullOrWhiteSpace(firstEmployeeId)
+                    ? $"Migração concluída. ⚠️ Atenção: EmployeeId não foi atribuído (projeto {legacyProjectId} não tem funcionários)."
+                    : $"Migração concluída. ✅ Projeto, {sqlEmployees.Count} funcionário(s) e áreas migrados. EmployeeId atribuído: {firstEmployeeId}";
+
+                return Result.Ok(message, resultData);
             }
             catch (Exception ex)
             {
-                return Result.Error($"Erro durante a migração: {ex.Message}");
+                var errorMessage = $"Erro durante a migração: {ex.Message}";
+                if (ex.InnerException != null)
+                {
+                    errorMessage += $" | Inner: {ex.InnerException.Message}";
+                }
+                return Result.Error(errorMessage);
             }
-        }
-
-        /// <summary>
-        /// Busca áreas do projeto no SQL Server
-        /// </summary>
-        private async Task<List<SqlServerAreaEntity>> GetAreasFromSqlServerAsync(
-            string connectionString,
-            int projectId,
-            CancellationToken cancellationToken)
-        {
-            var areas = new List<SqlServerAreaEntity>();
-
-            await using var connection = new SqlConnection(connectionString);
-            await connection.OpenAsync(cancellationToken);
-
-            await using var command = new SqlCommand(QueryAreas, connection);
-            command.Parameters.AddWithValue("@projectId", projectId);
-
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                areas.Add(MapAreaFromReader(reader));
-            }
-
-            return areas;
-        }
-
-        /// <summary>
-        /// Busca tarefas do projeto no SQL Server
-        /// </summary>
-        private async Task<List<SqlServerTarefaEntity>> GetTarefasFromSqlServerAsync(
-            string connectionString,
-            int projectId,
-            CancellationToken cancellationToken)
-        {
-            var tarefas = new List<SqlServerTarefaEntity>();
-
-            await using var connection = new SqlConnection(connectionString);
-            await connection.OpenAsync(cancellationToken);
-
-            await using var command = new SqlCommand(QueryTarefas, connection);
-            command.Parameters.AddWithValue("@projectId", projectId);
-
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                tarefas.Add(MapTarefaFromReader(reader));
-            }
-
-            return tarefas;
-        }
-
-        /// <summary>
-        /// Mapeia uma linha do DataReader para SqlServerAreaEntity
-        /// </summary>
-        private static SqlServerAreaEntity MapAreaFromReader(SqlDataReader reader)
-        {
-            return new SqlServerAreaEntity
-            {
-                AreaId = reader.GetInt32(reader.GetOrdinal("AREA_ID")),
-                WorkAreaId = reader.GetInt32(reader.GetOrdinal("WORK_AREA_ID")),
-                Area = GetStringValue(reader, "AREA"),
-                Metros2 = GetInt32Value(reader, "METROS2"),
-                Densidade = GetStringValue(reader, "DENSIDADE"),
-                WorkHeaderId = reader.GetInt32(reader.GetOrdinal("WORK_HEADER_ID"))
-            };
-        }
-
-        /// <summary>
-        /// Mapeia uma linha do DataReader para SqlServerTarefaEntity
-        /// </summary>
-        private static SqlServerTarefaEntity MapTarefaFromReader(SqlDataReader reader)
-        {
-            return new SqlServerTarefaEntity
-            {
-                Tarefa = GetInt32Value(reader, "Tarefa"),
-                Descricao = GetStringValue(reader, "DESCRICAO"),
-                Periodo = GetStringValue(reader, "PERIODO"),
-                Frequencia = GetStringValue(reader, "FREQUENCIA"),
-                Metros2 = GetInt32Value(reader, "METROS2"),
-                WorkHeaderId = reader.GetInt32(reader.GetOrdinal("WORK_HEADER_ID")),
-                WorkAreaId = reader.GetInt32(reader.GetOrdinal("WORK_AREA_ID"))
-            };
-        }
-
-        /// <summary>
-        /// Obtém valor string do reader, retornando string vazia se for DBNull
-        /// </summary>
-        private static string GetStringValue(SqlDataReader reader, string columnName)
-        {
-            var ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? string.Empty : reader.GetString(ordinal);
-        }
-
-        /// <summary>
-        /// Obtém valor int do reader, retornando 0 se for DBNull
-        /// </summary>
-        private static int GetInt32Value(SqlDataReader reader, string columnName)
-        {
-            var ordinal = reader.GetOrdinal(columnName);
-            return reader.IsDBNull(ordinal) ? 0 : reader.GetInt32(ordinal);
         }
 
         /// <summary>
@@ -203,17 +120,85 @@ namespace LimpidusMongoDB.Application.Services
         }
 
         /// <summary>
+        /// Busca o primeiro funcionário do projeto pelo legacyId
+        /// </summary>
+        /// <remarks>
+        /// Retorna o ID do primeiro funcionário encontrado no projeto.
+        /// Estamos usando FirstOrDefault pois ainda não há uma regra de negócio clara
+        /// sobre qual funcionário deve ser atribuído a cada área durante a migração.
+        /// </remarks>
+        private async Task<string?> GetFirstEmployeeIdFromProjectAsync(int legacyProjectId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var projectResult = await _projectService.GetByLegacyIdAsync(legacyProjectId);
+
+                if (!projectResult.Success)
+                {
+                    // Projeto não encontrado ou erro ao buscar
+                    // Nota: Isso é esperado se o projeto ainda não foi criado no MongoDB
+                    // O employeeId ficará null e pode ser preenchido posteriormente
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Projeto {legacyProjectId} não encontrado no MongoDB. Mensagem: {projectResult.Message}");
+                    return null;
+                }
+
+                if (projectResult.Data is not ProjectResponse projectResponse)
+                {
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Dados do projeto {legacyProjectId} não são do tipo ProjectResponse");
+                    return null;
+                }
+
+                // Pega o primeiro funcionário do array de funcionários do projeto
+                // Nota: Usando FirstOrDefault pois ainda não há regra de negócio clara
+                // sobre qual funcionário atribuir a cada área na migração
+                var employees = projectResponse.Employees?.ToList() ?? new List<EmployeeResponse>();
+
+                System.Diagnostics.Debug.WriteLine($"📊 Projeto {legacyProjectId} encontrado. Total de funcionários: {employees.Count}");
+
+                if (!employees.Any())
+                {
+                    // Projeto não tem funcionários cadastrados
+                    // O employeeId ficará null
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Projeto {legacyProjectId} não tem funcionários cadastrados");
+                    return null;
+                }
+
+                var firstEmployee = employees.FirstOrDefault();
+                var employeeId = firstEmployee?.Id;
+
+                System.Diagnostics.Debug.WriteLine($"✅ Primeiro funcionário do projeto {legacyProjectId}: {employeeId} (Nome: {firstEmployee?.FullName})");
+
+                return employeeId;
+            }
+            catch (Exception ex)
+            {
+                // Em caso de erro, retorna null (employeeId ficará null)
+                // Log do erro para debug (pode ser removido em produção)
+                System.Diagnostics.Debug.WriteLine($"❌ Erro ao buscar funcionário do projeto {legacyProjectId}: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"   Inner Exception: {ex.InnerException.Message}");
+                }
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Converte áreas e tarefas do SQL Server para AreaActivityRequest
         /// </summary>
         private static List<AreaActivityRequest> MapToAreaActivityRequests(
             List<SqlServerAreaEntity> areas,
             Dictionary<int, List<SqlServerTarefaEntity>> tarefasPorWorkAreaId,
-            int legacyProjectId)
+            int legacyProjectId,
+            string? employeeId)
         {
             var areaActivityRequests = new List<AreaActivityRequest>();
+            
+            // Ordena áreas por WORK_AREA_ID e usa DENSE_RANK para orderBy (como na query SQL original)
+            var areasOrdenadas = areas.OrderBy(a => a.WorkAreaId).ToList();
             short orderBy = 1;
 
-            foreach (var area in areas.OrderBy(a => a.Area))
+            foreach (var area in areasOrdenadas)
             {
                 var tarefasDaArea = tarefasPorWorkAreaId.GetValueOrDefault(area.WorkAreaId, new List<SqlServerTarefaEntity>());
                 var items = MapTarefasToItems(tarefasDaArea);
@@ -225,9 +210,13 @@ namespace LimpidusMongoDB.Application.Services
                     Description = string.Empty,
                     QuickTask = false,
                     TotalM2 = area.Metros2,
-                    EmployeeId = null,
+                    // Atribui o primeiro funcionário do projeto a todas as áreas
+                    // Nota: Usando o primeiro funcionário pois ainda não há regra de negócio clara
+                    // sobre qual funcionário atribuir a cada área durante a migração
+                    EmployeeId = employeeId,
+                    // Usa WORK_AREA_ID diretamente como headerId (a query SQL usa DENSE_RANK, mas o valor real é mais útil)
                     HeaderId = area.WorkAreaId.ToString(),
-                    OrderBy = orderBy++,
+                    OrderBy = orderBy++, // DENSE_RANK equivalente (incremental baseado em WORK_AREA_ID)
                     Frequency = null,
                     Items = items,
                     ProjectId = legacyProjectId
@@ -245,19 +234,41 @@ namespace LimpidusMongoDB.Application.Services
         private static List<AreaActivityItemRequest> MapTarefasToItems(List<SqlServerTarefaEntity> tarefas)
         {
             return tarefas
-                .OrderBy(t => t.Tarefa)
-                .Select((tarefa, index) => new AreaActivityItemRequest
+                .OrderBy(t => t.Ordem) // Usa ORDEM da tabela WORK_TAREFAS, como na query SQL original
+                .ThenBy(t => t.Tarefa) // Ordenação secundária por TAREFA_NUMERO
+                .Select(tarefa => new AreaActivityItemRequest
                 {
                     Id = tarefa.Tarefa.ToString(),
                     Name = tarefa.Descricao ?? string.Empty,
-                    OrderBy = (short)(index + 1),
+                    OrderBy = (short)(tarefa.Ordem > 0 ? tarefa.Ordem : tarefa.Tarefa), // Usa ORDEM se disponível, senão usa Tarefa
                     Frequency = new AreaActivityFrequency
                     {
-                        Type = FrequencyConverter.ConvertFrequencyType(tarefa.Frequencia),
+                        // Usa FrequenciaDias (FREQ.DIAS) para conversão, como na query SQL original
+                        Type = ConvertFrequencyTypeFromDias(tarefa.FrequenciaDias, tarefa.FrequenciaNome),
                         WeekDays = FrequencyConverter.ConvertPeriodoToWeekDays(tarefa.Periodo)
                     }
                 })
                 .ToList();
+        }
+
+        /// <summary>
+        /// Converte frequência baseada em DIAS (como na query SQL original)
+        /// </summary>
+        private static string ConvertFrequencyTypeFromDias(int dias, string frequenciaNome)
+        {
+            return dias switch
+            {
+                1 => "yearly",
+                2 => "semi-annual",
+                4 => "quarterly",
+                6 => "bimonthly",
+                12 => "monthly",
+                26 => "biweekly",
+                52 => "weekly",
+                260 => "weekly", // 5 dias por semana * 52 semanas
+                365 => "everyday",
+                _ => !string.IsNullOrWhiteSpace(frequenciaNome) ? frequenciaNome.ToLower() : "weekly" // Fallback para nome da frequência ou padrão
+            };
         }
 
         /// <summary>
@@ -274,9 +285,12 @@ namespace LimpidusMongoDB.Application.Services
                 return;
             }
 
+            // Agrupa por nome e pega o primeiro ID caso haja duplicatas
+            // Nota: Se houver áreas com o mesmo nome, usa a primeira encontrada
             var existingAreasMap = existingAreasList
                 .Where(a => !string.IsNullOrWhiteSpace(a.Name))
-                .ToDictionary(a => a.Name, a => a.Id);
+                .GroupBy(a => a.Name)
+                .ToDictionary(g => g.Key, g => g.First().Id);
 
             foreach (var request in areaActivityRequests)
             {
@@ -285,6 +299,118 @@ namespace LimpidusMongoDB.Application.Services
                     existingAreasMap.TryGetValue(request.Name, out var existingId))
                 {
                     request.Id = existingId;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Cria ou atualiza o projeto no MongoDB a partir dos dados do SQL Server
+        /// </summary>
+        private async Task<string?> CreateOrUpdateProjectAsync(SqlServerProjectEntity sqlProject, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // Verifica se projeto já existe no MongoDB
+                var existingProjectResult = await _projectService.GetByLegacyIdAsync(sqlProject.WorkHeaderId);
+                string? existingProjectId = null;
+
+                if (existingProjectResult.Success && existingProjectResult.Data is ProjectResponse existingProject)
+                {
+                    existingProjectId = existingProject.Id;
+                }
+
+                // Concatena endereço
+                var address = $"{sqlProject.End1} {sqlProject.End2} {sqlProject.End3}".Trim();
+
+                // Cria ProjectRequest
+                var projectRequest = new ProjectRequest
+                {
+                    Id = existingProjectId ?? string.Empty,
+                    LegacyId = sqlProject.WorkHeaderId,
+                    Name = sqlProject.NomeProjeto ?? string.Empty,
+                    TotalM2 = Convert.ToInt32(sqlProject.TotalM2),
+                    DaysYear = sqlProject.DiasAno,
+                    Factor = Convert.ToInt32(sqlProject.Fator),
+                    Address = address,
+                    Contact = sqlProject.Contato ?? string.Empty,
+                    TelephoneNumber = sqlProject.Telefone ?? string.Empty,
+                    CellphoneNumber = sqlProject.Celular ?? string.Empty,
+                    RegistrationDate = sqlProject.DataCad != DateTime.MinValue ? sqlProject.DataCad : DateTime.Now,
+                    Level = sqlProject.NivelProjeto,
+                    Employees = new List<EmployeeRequest>() // Funcionários serão criados separadamente
+                };
+
+                // Salva projeto
+                var saveResult = await _projectService.SaveAsync(projectRequest);
+                if (!saveResult.Success)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Erro ao salvar projeto {sqlProject.WorkHeaderId}: {saveResult.Message}");
+                    return null;
+                }
+
+                // Busca o projeto salvo para obter o ID
+                var savedProjectResult = await _projectService.GetByLegacyIdAsync(sqlProject.WorkHeaderId);
+                if (savedProjectResult.Success && savedProjectResult.Data is ProjectResponse savedProject)
+                {
+                    System.Diagnostics.Debug.WriteLine($"✅ Projeto {sqlProject.WorkHeaderId} criado/atualizado. ID: {savedProject.Id}");
+                    return savedProject.Id;
+                }
+
+                return existingProjectId;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Erro ao criar/atualizar projeto {sqlProject.WorkHeaderId}: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Cria ou atualiza funcionários no MongoDB a partir dos dados do SQL Server
+        /// </summary>
+        private async Task CreateOrUpdateEmployeesAsync(List<SqlServerEmployeeEntity> sqlEmployees, string projectId, CancellationToken cancellationToken)
+        {
+            // Busca funcionários existentes do projeto para verificar duplicatas
+            var existingProjectResult = await _projectService.GetByIdAsync(projectId);
+            var existingEmployees = new List<EmployeeResponse>();
+
+            if (existingProjectResult.Success && existingProjectResult.Data is ProjectResponse existingProject)
+            {
+                existingEmployees = existingProject.Employees?.ToList() ?? new List<EmployeeResponse>();
+            }
+
+            foreach (var sqlEmployee in sqlEmployees)
+            {
+                try
+                {
+                    // Verifica se funcionário já existe (por Number e ProjectId)
+                    var existingEmployee = existingEmployees.FirstOrDefault(e => e.Number == sqlEmployee.Funcionario);
+
+                    var employeeRequest = new EmployeeRequest
+                    {
+                        Id = existingEmployee?.Id ?? string.Empty,
+                        LegacyId = 0, // Não temos legacyId para funcionário
+                        FirstName = $"Funcionario {sqlEmployee.Funcionario}",
+                        LastName = string.Empty,
+                        Number = sqlEmployee.Funcionario,
+                        Observation = sqlEmployee.Obs ?? string.Empty,
+                        ProjectId = projectId
+                    };
+
+                    var saveResult = await _employeeService.SaveAsync(employeeRequest);
+                    if (!saveResult.Success)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"⚠️ Erro ao salvar funcionário {sqlEmployee.Funcionario} do projeto {projectId}: {saveResult.Message}");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"✅ Funcionário {sqlEmployee.Funcionario} criado/atualizado no projeto {projectId}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Erro ao criar/atualizar funcionário {sqlEmployee.Funcionario}: {ex.Message}");
+                    // Continua com próximo funcionário mesmo se este falhar
                 }
             }
         }

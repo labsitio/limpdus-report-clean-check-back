@@ -11,7 +11,7 @@ namespace LimpidusMongoDB.Application.Services.Interfaces
         /// <param name="sqlServerConnectionString">String de conexão do SQL Server</param>
         /// <param name="cancellationToken"></param>
         Task<Result> MigrateFromSqlServerAsync(
-            int legacyProjectId, 
+            int legacyProjectId,
             string sqlServerConnectionString,
             CancellationToken cancellationToken = default);
     }

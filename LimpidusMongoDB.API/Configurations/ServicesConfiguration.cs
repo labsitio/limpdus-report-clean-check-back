@@ -27,6 +27,7 @@ namespace LimpidusMongoDB.Api.Configurations
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IJustificationRepository, JustificationRepository>();
             services.AddScoped<IReportService, ReportService>();
+            services.AddScoped<ISqlServerDataAccessFactory, SqlServerDataAccessFactory>();
             services.AddScoped<IMigrationService, MigrationService>();
         }
     }

@@ -29,7 +29,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         /// 
         ///     POST /v1/Migration/from-sqlserver?legacyProjectId=4698
         ///     
-        /// A connection string é obtida automaticamente do appsettings.json (SqlServerConnection) se não informada
+        /// A connection string é obtida automaticamente do appsettings.json (SqlServerDB) se não informada
         /// </remarks>
         [HttpPost("from-sqlserver")]
         [SwaggerResponse((int)HttpStatusCode.OK, description: "Migração realizada com sucesso")]
@@ -43,14 +43,14 @@ namespace LimpidusMongoDB.Api.Controllers.v1
             // Se não informou connection string, tenta pegar do appsettings
             if (string.IsNullOrWhiteSpace(sqlServerConnectionString))
             {
-                sqlServerConnectionString = _configuration.GetConnectionString("SqlServerConnection");
+                sqlServerConnectionString = _configuration.GetConnectionString("SqlServerDB");
                 
                 if (string.IsNullOrWhiteSpace(sqlServerConnectionString))
                 {
                     return BadRequest(new
                     {
                         success = false,
-                        message = "Connection string do SQL Server não encontrada. Informe via parâmetro ou configure 'SqlServerConnection' no appsettings.json"
+                        message = "Connection string do SQL Server não encontrada. Informe via parâmetro ou configure 'SqlServerDB' no appsettings.json"
                     });
                 }
             }
