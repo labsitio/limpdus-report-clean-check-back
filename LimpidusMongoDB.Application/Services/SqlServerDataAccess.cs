@@ -51,6 +51,10 @@ namespace LimpidusMongoDB.Application.Services
             WHERE WORK_HEADER_ID = @projectId
             ORDER BY FUNCIONARIO";
 
+        private const string QueryNomeProjeto = "SELECT NOMEPROJETO FROM WORK_HEADER WITH(NOLOCK) WHERE WORK_HEADER_ID = @projetoId";
+        private const string QueryComplaintMail = "SELECT MAIL FROM WORK_HEADER WITH(NOLOCK) WHERE WORK_HEADER_ID = @projetoId";
+        private const string QueryNomeArea = "SELECT AREA FROM WORK_AREA WITH(NOLOCK) WHERE WORK_AREA_ID = @areaId";
+
         public SqlServerDataAccess(string connectionString)
         {
             _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
@@ -132,6 +136,42 @@ namespace LimpidusMongoDB.Application.Services
             }
 
             return employees;
+        }
+
+        public async Task<string?> GetNomeProjetoAsync(int projetoId, CancellationToken cancellationToken = default)
+        {
+            await using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+            await using var command = new SqlCommand(QueryNomeProjeto, connection);
+            command.Parameters.AddWithValue("@projetoId", projetoId);
+            var value = await command.ExecuteScalarAsync(cancellationToken);
+            if (value == null || value == DBNull.Value) return null;
+            var s = value.ToString();
+            return string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+        }
+
+        public async Task<string?> GetComplaintMailAsync(int projetoId, CancellationToken cancellationToken = default)
+        {
+            await using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+            await using var command = new SqlCommand(QueryComplaintMail, connection);
+            command.Parameters.AddWithValue("@projetoId", projetoId);
+            var value = await command.ExecuteScalarAsync(cancellationToken);
+            if (value == null || value == DBNull.Value) return null;
+            var s = value.ToString();
+            return string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+        }
+
+        public async Task<string?> GetNomeAreaAsync(int areaId, CancellationToken cancellationToken = default)
+        {
+            await using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+            await using var command = new SqlCommand(QueryNomeArea, connection);
+            command.Parameters.AddWithValue("@areaId", areaId);
+            var value = await command.ExecuteScalarAsync(cancellationToken);
+            if (value == null || value == DBNull.Value) return null;
+            var s = value.ToString();
+            return string.IsNullOrWhiteSpace(s) ? null : s.Trim();
         }
 
         private static SqlServerAreaEntity MapAreaFromReader(SqlDataReader reader)

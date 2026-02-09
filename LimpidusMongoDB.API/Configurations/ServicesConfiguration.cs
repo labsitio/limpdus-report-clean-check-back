@@ -1,4 +1,4 @@
-﻿using LimpidusMongoDB.Application.Data;
+using LimpidusMongoDB.Application.Data;
 using LimpidusMongoDB.Application.Data.Repositories;
 using LimpidusMongoDB.Application.Data.Repositories.Interfaces;
 using LimpidusMongoDB.Application.Services;
@@ -29,6 +29,7 @@ namespace LimpidusMongoDB.Api.Configurations
             services.AddScoped<IReportService, ReportService>();
             services.AddScoped<ISqlServerDataAccessFactory, SqlServerDataAccessFactory>();
             services.AddScoped<IMigrationService, MigrationService>();
+            services.AddScoped<IComplaintService, ComplaintService>();
         }
     }
 }
