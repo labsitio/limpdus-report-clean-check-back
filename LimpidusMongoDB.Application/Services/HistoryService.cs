@@ -8,11 +8,15 @@ using LimpidusMongoDB.Application.Helpers;
 using LimpidusMongoDB.Application.Services.Interfaces;
 using MongoDB.Driver;
 using ZstdSharp.Unsafe;
+using System.Globalization;
 
 namespace LimpidusMongoDB.Application.Services
 {
     public class HistoryService : IHistoryService
     {
+        private static readonly TimeZoneInfo SaoPauloTimeZone = GetBrazilTimeZone();
+        private static readonly CultureInfo PtBrCulture = new("pt-BR");
+
         private readonly IHistoryRepository _historyRepository;
         private readonly IEmployeeService _employeeService;
         private readonly ISpreadsheetService _spreadsheetService;
@@ -107,11 +111,14 @@ namespace LimpidusMongoDB.Application.Services
             var history = historyList.Data;
             var arrangedData = history.Select(x =>
             {
+                var startedAtLocal = ConvertUtcToBrazilLocalTime(x.DateEnd);
+                var endedAtLocal = ConvertUtcToBrazilLocalTime(x.DateStart);
+
                 string[] obj = new string[6];
                 obj[0] = x.Department;
                 obj[1] = x.EmployeeName + " " + x.EmployeeLastName;
-                obj[2] = x.DateEnd.ToString();
-                obj[3] = x.DateStart.ToString();
+                obj[2] = startedAtLocal.ToString("dd/MM/yyyy HH:mm:ss", PtBrCulture);
+                obj[3] = endedAtLocal.ToString("dd/MM/yyyy HH:mm:ss", PtBrCulture);
                 obj[4] = x.Duration.ToString();
                 obj[5] = x.Status ? "Concluído" : "Pendente";
 
@@ -139,6 +146,28 @@ namespace LimpidusMongoDB.Application.Services
 
             return Result.Ok(data: spreadsheet.Data);
         }
+
+        private static DateTime ConvertUtcToBrazilLocalTime(DateTime value)
+        {
+            var utcDateTime = value.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
+                : value.ToUniversalTime();
+
+            return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, SaoPauloTimeZone);
+        }
+
+        private static TimeZoneInfo GetBrazilTimeZone()
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
+            }
+        }
+
         public async Task<Result> SaveAsync(IEnumerable<HistoryRequest> requests, CancellationToken cancellationToken = default)
         {
             try
