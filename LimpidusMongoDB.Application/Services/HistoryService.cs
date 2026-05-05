@@ -117,8 +117,8 @@ namespace LimpidusMongoDB.Application.Services
                 string[] obj = new string[6];
                 obj[0] = x.Department;
                 obj[1] = x.EmployeeName + " " + x.EmployeeLastName;
-                obj[2] = startedAtLocal.ToString("dd/MM/yyyy HH:mm:ss", PtBrCulture);
-                obj[3] = endedAtLocal.ToString("dd/MM/yyyy HH:mm:ss", PtBrCulture);
+                obj[2] = endedAtLocal.ToString("dd/MM/yyyy HH:mm:ss", PtBrCulture);
+                obj[3] = startedAtLocal.ToString("dd/MM/yyyy HH:mm:ss", PtBrCulture);
                 obj[4] = x.Duration.ToString();
                 obj[5] = x.Status ? "Concluído" : "Pendente";
 
