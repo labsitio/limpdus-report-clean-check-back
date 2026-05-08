@@ -71,7 +71,7 @@ namespace LimpidusMongoDB.Application.Services
 
                 var day = (short)referenceDate.Value.Date.DayOfWeek;
                 var items = area.Items?
-                    .Where(i => AreaActivityScheduleFilter.FrequencyAllowsDay(i.Frequency, day))
+                    .Where(i => AreaActivityScheduleFilter.FrequencyAllowsDayForItem(i.Frequency, area.Frequency, day))
                     .ToList();
 
                 return Result.Ok(data: items);

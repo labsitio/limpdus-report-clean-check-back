@@ -27,7 +27,7 @@ namespace LimpidusMongoDB.Application.Helpers
                     continue;
 
                 var items = area.Items?
-                    .Where(item => FrequencyAllowsDay(item.Frequency, day))
+                    .Where(item => FrequencyAllowsDayForItem(item.Frequency, area.Frequency, day))
                     .ToList();
 
                 if (items == null || items.Count == 0)
@@ -62,12 +62,42 @@ namespace LimpidusMongoDB.Application.Helpers
         public static bool FrequencyAllowsDay(AreaActivityFrequencyEntity? frequency, short day) =>
             frequency == null || FrequencyAllowsDay(frequency.Type, frequency.WeekDays, day);
 
+        /// <summary>
+        /// Frequência efetiva do item: usa a do item; se ausente, herda da área (evita tarefa “sempre visível”).
+        /// </summary>
+        public static bool FrequencyAllowsDayForItem(
+            AreaActivityFrequencyResponse? itemFrequency,
+            AreaActivityFrequencyResponse? areaFrequency,
+            short day)
+        {
+            var effective = itemFrequency ?? areaFrequency;
+            if (effective == null)
+                return true;
+
+            return FrequencyAllowsDay(effective.Type, effective.WeekDays, day);
+        }
+
+        /// <summary>
+        /// Mesma regra que <see cref="FrequencyAllowsDayForItem"/> para entidades Mongo.
+        /// </summary>
+        public static bool FrequencyAllowsDayForItem(
+            AreaActivityFrequencyEntity? itemFrequency,
+            AreaActivityFrequencyEntity? areaFrequency,
+            short day)
+        {
+            var effective = itemFrequency ?? areaFrequency;
+            if (effective == null)
+                return true;
+
+            return FrequencyAllowsDay(effective.Type, effective.WeekDays, day);
+        }
+
         public static bool FrequencyAllowsDay(string? type, IEnumerable<short>? weekDays, short day)
         {
             if (IsEverydayType(type))
                 return true;
 
-            var days = weekDays?.ToList();
+            var days = weekDays?.Select(d => (short)Convert.ToInt16(d)).ToList();
             if (days == null || days.Count == 0)
                 return true;
 
