@@ -14,7 +14,7 @@ namespace LimpidusMongoDB.Application.Services
 {
     public class HistoryService : IHistoryService
     {
-        private static readonly TimeZoneInfo SaoPauloTimeZone = GetBrazilTimeZone();
+        private static readonly TimeZoneInfo SaoPauloTimeZone = BrazilScheduleDate.SaoPauloTimeZone;
         private static readonly CultureInfo PtBrCulture = new("pt-BR");
 
         private readonly IHistoryRepository _historyRepository;
@@ -154,18 +154,6 @@ namespace LimpidusMongoDB.Application.Services
                 : value.ToUniversalTime();
 
             return TimeZoneInfo.ConvertTimeFromUtc(utcDateTime, SaoPauloTimeZone);
-        }
-
-        private static TimeZoneInfo GetBrazilTimeZone()
-        {
-            try
-            {
-                return TimeZoneInfo.FindSystemTimeZoneById("America/Sao_Paulo");
-            }
-            catch (TimeZoneNotFoundException)
-            {
-                return TimeZoneInfo.FindSystemTimeZoneById("E. South America Standard Time");
-            }
         }
 
         public async Task<Result> SaveAsync(IEnumerable<HistoryRequest> requests, CancellationToken cancellationToken = default)

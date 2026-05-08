@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using LimpidusMongoDB.Application.Contracts.Requests;
 using LimpidusMongoDB.Application.Contracts.Responses;
+using LimpidusMongoDB.Application.Helpers;
 using LimpidusMongoDB.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -22,6 +23,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         /// GET para obter itens da area
         /// </summary>
         /// <param name="id">Id da area</param>
+        /// <param name="referenceDate">Opcional. Se omitido, usa hoje (America/Sao_Paulo). Filtra itens por weekDays.</param>
         /// <param name="cancellationToken"></param>
         /// <remarks>
         /// Exemplo de requisição para obter itens da area:
@@ -49,9 +51,13 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         [SwaggerResponse((int)HttpStatusCode.BadRequest)]
         [SwaggerResponse((int)HttpStatusCode.NotFound)]
         [SwaggerResponse((int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetItemsByAreaId([FromRoute] string id, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetItemsByAreaId(
+            [FromRoute] string id,
+            [FromQuery] DateTime? referenceDate,
+            CancellationToken cancellationToken)
         {
-            var result = await _areaActivityService.GetItemsByAreaIsAsync(id, cancellationToken);
+            var scheduleDate = referenceDate?.Date ?? BrazilScheduleDate.TodayInSaoPaulo();
+            var result = await _areaActivityService.GetItemsByAreaIsAsync(id, scheduleDate, cancellationToken);
 
             return result.Success ? Ok(result) : BadRequest(result);
         }

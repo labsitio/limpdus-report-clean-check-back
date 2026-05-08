@@ -107,7 +107,7 @@ namespace LimpidusMongoDB.Tests.Services
                 .ReturnsAsync(tarefas);
 
             _areaActivityServiceMock
-                .Setup(x => x.GetByProjectIdAsync(projectId))
+                .Setup(x => x.GetByProjectIdAsync(projectId, null))
                 .ReturnsAsync(Result.Ok(data: new List<AreaActivityResponse>()));
 
             _areaActivityServiceMock
@@ -174,7 +174,7 @@ namespace LimpidusMongoDB.Tests.Services
                 .ReturnsAsync(new List<SqlServerTarefaEntity>());
 
             _areaActivityServiceMock
-                .Setup(x => x.GetByProjectIdAsync(projectId))
+                .Setup(x => x.GetByProjectIdAsync(projectId, null))
                 .ReturnsAsync(Result.Ok(data: existingAreas));
 
             _areaActivityServiceMock
@@ -225,7 +225,7 @@ namespace LimpidusMongoDB.Tests.Services
                 .ReturnsAsync(new List<SqlServerTarefaEntity>());
 
             _areaActivityServiceMock
-                .Setup(x => x.GetByProjectIdAsync(projectId))
+                .Setup(x => x.GetByProjectIdAsync(projectId, null))
                 .ReturnsAsync(Result.Ok(data: new List<AreaActivityResponse>()));
 
             _areaActivityServiceMock
@@ -322,7 +322,7 @@ namespace LimpidusMongoDB.Tests.Services
                 .ReturnsAsync(tarefas);
 
             _areaActivityServiceMock
-                .Setup(x => x.GetByProjectIdAsync(projectId))
+                .Setup(x => x.GetByProjectIdAsync(projectId, null))
                 .ReturnsAsync(Result.Ok(data: new List<AreaActivityResponse>()));
 
             _areaActivityServiceMock
@@ -375,7 +375,7 @@ namespace LimpidusMongoDB.Tests.Services
                 .ReturnsAsync(new List<SqlServerTarefaEntity>());
 
             _areaActivityServiceMock
-                .Setup(x => x.GetByProjectIdAsync(projectId))
+                .Setup(x => x.GetByProjectIdAsync(projectId, null))
                 .ReturnsAsync(Result.Ok(data: new List<AreaActivityResponse>()));
 
             _areaActivityServiceMock

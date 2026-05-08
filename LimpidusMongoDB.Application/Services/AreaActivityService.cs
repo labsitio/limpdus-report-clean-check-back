@@ -20,11 +20,13 @@ namespace LimpidusMongoDB.Application.Services
             _areaActivityRepository = areaActivityRepository;
         }
 
-        public async Task<Result> GetByProjectIdAsync(int legacyProjectId)
+        public async Task<Result> GetByProjectIdAsync(int legacyProjectId, DateTime? referenceDate = null)
         {
             try
             {
                 var responseList = await FindByFilterAsync(Builders<AreaActivityEntity>.Filter.Eq(x => x.ProjectId, legacyProjectId));
+                if (referenceDate.HasValue)
+                    responseList = AreaActivityScheduleFilter.FilterAreasByReferenceDate(responseList, referenceDate.Value);
 
                 return Result.Ok(data: responseList);
             }
@@ -34,13 +36,19 @@ namespace LimpidusMongoDB.Application.Services
             }
         }
 
-        public async Task<Result> GetByProjectIdAndEmployeeIdAsync(int legacyProjectId, string employeeId, CancellationToken cancellationToken = default)
+        public async Task<Result> GetByProjectIdAndEmployeeIdAsync(
+            int legacyProjectId,
+            string employeeId,
+            DateTime? referenceDate = null,
+            CancellationToken cancellationToken = default)
         {
             try
             {
                 var mongoFilter = Builders<AreaActivityEntity>.Filter;
                 var filter = mongoFilter.Eq(x => x.ProjectId, legacyProjectId) & mongoFilter.Eq(x => x.EmployeeId, employeeId);
                 var responseList = await FindByFilterAsync(filter, cancellationToken);
+                if (referenceDate.HasValue)
+                    responseList = AreaActivityScheduleFilter.FilterAreasByReferenceDate(responseList, referenceDate.Value);
 
                 return Result.Ok(data: responseList);
             }
@@ -50,7 +58,7 @@ namespace LimpidusMongoDB.Application.Services
             }
         }
 
-        public async Task<Result> GetItemsByAreaIsAsync(string areaId, CancellationToken cancellationToken = default)
+        public async Task<Result> GetItemsByAreaIsAsync(string areaId, DateTime? referenceDate = null, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -58,7 +66,15 @@ namespace LimpidusMongoDB.Application.Services
                 if (area == null)
                     return Result.Error(ProjectErrors.Project_Error_NotFound.Description());
 
-                return Result.Ok(data: area.Items);
+                if (!referenceDate.HasValue)
+                    return Result.Ok(data: area.Items);
+
+                var day = (short)referenceDate.Value.Date.DayOfWeek;
+                var items = area.Items?
+                    .Where(i => AreaActivityScheduleFilter.FrequencyAllowsDay(i.Frequency, day))
+                    .ToList();
+
+                return Result.Ok(data: items);
             }
             catch (Exception)
             {

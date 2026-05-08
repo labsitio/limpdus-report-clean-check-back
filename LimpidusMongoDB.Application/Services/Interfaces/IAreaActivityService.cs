@@ -5,11 +5,14 @@ namespace LimpidusMongoDB.Application.Services.Interfaces
 {
     public interface IAreaActivityService
     {
-        Task<Result> GetByProjectIdAsync(int legacyProjectId);
+        /// <param name="referenceDate">Se informado (só a data), filtra tarefas por weekDays (0=Dom…6=Sáb).</param>
+        Task<Result> GetByProjectIdAsync(int legacyProjectId, DateTime? referenceDate = null);
 
-        Task<Result> GetByProjectIdAndEmployeeIdAsync(int legacyProjectId, string employeeId, CancellationToken cancellationToken = default);
+        /// <param name="referenceDate">Se informado (só a data), filtra tarefas por weekDays (0=Dom…6=Sáb).</param>
+        Task<Result> GetByProjectIdAndEmployeeIdAsync(int legacyProjectId, string employeeId, DateTime? referenceDate = null, CancellationToken cancellationToken = default);
 
-        Task<Result> GetItemsByAreaIsAsync(string areaId, CancellationToken cancellationToken = default);
+        /// <param name="referenceDate">Se informado (só a data), filtra itens por weekDays.</param>
+        Task<Result> GetItemsByAreaIsAsync(string areaId, DateTime? referenceDate = null, CancellationToken cancellationToken = default);
 
         Task<Result> SaveAsync(IEnumerable<AreaActivityRequest> request, CancellationToken cancellationToken = default);
     }

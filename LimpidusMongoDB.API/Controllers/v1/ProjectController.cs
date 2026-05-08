@@ -1,6 +1,7 @@
 using System.Net;
 using LimpidusMongoDB.Application.Contracts.Requests;
 using LimpidusMongoDB.Application.Contracts.Responses;
+using LimpidusMongoDB.Application.Helpers;
 using LimpidusMongoDB.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -124,6 +125,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         /// </summary>
         /// <param name="legacyId">Id legado do projeto</param>
         /// <param name="employeeId">Id do funcionario</param>
+        /// <param name="referenceDate">Opcional. Data calendario (ex. 2026-05-09). Se omitido, usa hoje em America/Sao_Paulo. Filtra por weekDays (0=Dom…6=Sab).</param>
         /// <param name="cancellationToken"></param>
         /// <remarks>
         /// Exemplo de requisi��o para obter areas vinculadas ao funcionario:
@@ -173,9 +175,11 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         public async Task<IActionResult> GetAreaActivitiesByProjectAndEmployee(
             [FromRoute] int legacyId,
             [FromRoute] string employeeId,
+            [FromQuery] DateTime? referenceDate,
             CancellationToken cancellationToken)
         {
-            var result = await _areaActivityService.GetByProjectIdAndEmployeeIdAsync(legacyId, employeeId, cancellationToken);
+            var scheduleDate = referenceDate?.Date ?? BrazilScheduleDate.TodayInSaoPaulo();
+            var result = await _areaActivityService.GetByProjectIdAndEmployeeIdAsync(legacyId, employeeId, scheduleDate, cancellationToken);
 
             return result.Success ? Ok(result) : BadRequest(result);
         }
@@ -231,11 +235,14 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         /// GET para obter �reas e atividades relacionadas ao projeto
         /// </summary>
         /// <param name="id">Id do projeto</param>
+        /// <param name="referenceDate">Opcional. Data yyyy-MM-dd. Se omitido, usa hoje em America/Sao_Paulo.</param>
         /// <remarks>
         /// Exemplo de requisi��o para obter areas e atividades do projeto:
         /// 
         ///     Request:
-        ///     GET /v1/Project/{id}/AreaActivity
+        ///     GET /v1/Project/{id}/AreaActivity?referenceDate=2026-05-09
+        ///     
+        ///     referenceDate (query): opcional. Se omitido, usa a data atual em America/Sao_Paulo. Filtra itens cuja lista weekDays inclui o dia da semana dessa data (0=Domingo..6=Sabado).
         ///     
         ///     Response:        
         ///     {
@@ -274,9 +281,10 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         [SwaggerResponse((int)HttpStatusCode.BadRequest)]
         [SwaggerResponse((int)HttpStatusCode.NotFound)]
         [SwaggerResponse((int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> GetAreaActivitesByProject([FromRoute] int id)
+        public async Task<IActionResult> GetAreaActivitesByProject([FromRoute] int id, [FromQuery] DateTime? referenceDate)
         {
-            var result = await _areaActivityService.GetByProjectIdAsync(id);
+            var scheduleDate = referenceDate?.Date ?? BrazilScheduleDate.TodayInSaoPaulo();
+            var result = await _areaActivityService.GetByProjectIdAsync(id, scheduleDate);
 
             return result.Success ? Ok(result) : BadRequest(result);
         }
