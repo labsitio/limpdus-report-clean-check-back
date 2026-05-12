@@ -63,7 +63,9 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         }
 
         /// <summary>
-        /// POST para atualizar a distribuição das areas entre funcionarios
+        /// POST para gravar áreas (upsert). Com **mais de um** objeto no body, remove do Mongo áreas do projeto que não vieram na lista
+        /// (com um único <c>employeeId</c> no array, a remoção limita-se a esse funcionário; com vários <c>employeeId</c>, ao projeto inteiro).
+        /// Com **apenas um** objeto no body **não** há remoção em massa — só grava/atualiza esse documento (evita apagar outras áreas ao salvar uma).
         /// </summary>
         /// <param name="request"></param>
         /// <param name="cancellationToken"></param>

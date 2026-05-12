@@ -28,6 +28,8 @@ namespace LimpidusMongoDB.Application.Services
                 if (referenceDate.HasValue)
                     responseList = AreaActivityScheduleFilter.FilterAreasByReferenceDate(responseList, referenceDate.Value);
 
+                responseList = DedupeAreasForList(responseList);
+
                 return Result.Ok(data: responseList);
             }
             catch (Exception)
@@ -50,6 +52,8 @@ namespace LimpidusMongoDB.Application.Services
                 if (referenceDate.HasValue)
                     responseList = AreaActivityScheduleFilter.FilterAreasByReferenceDate(responseList, referenceDate.Value);
 
+                responseList = DedupeAreasForList(responseList);
+
                 return Result.Ok(data: responseList);
             }
             catch (Exception)
@@ -66,12 +70,14 @@ namespace LimpidusMongoDB.Application.Services
                 if (area == null)
                     return Result.Error(ProjectErrors.Project_Error_NotFound.Description());
 
+                var itemsSource = await ResolveBestItemSourceAreaAsync(area, cancellationToken);
+
                 if (!referenceDate.HasValue)
-                    return Result.Ok(data: area.Items);
+                    return Result.Ok(data: itemsSource.Items);
 
                 var day = (short)referenceDate.Value.Date.DayOfWeek;
-                var items = area.Items?
-                    .Where(i => AreaActivityScheduleFilter.FrequencyAllowsDayForItem(i.Frequency, area.Frequency, day))
+                var items = itemsSource.Items?
+                    .Where(i => AreaActivityScheduleFilter.FrequencyAllowsDayForItem(i.Frequency, itemsSource.Frequency, day))
                     .ToList();
 
                 return Result.Ok(data: items);
@@ -89,10 +95,23 @@ namespace LimpidusMongoDB.Application.Services
                 // Delete
                 var allIds = requests?.Where(x => !string.IsNullOrWhiteSpace(x.Id)).Select(x => ObjectId.Parse(x.Id)).ToArray();
                 var projectId = requests?.FirstOrDefault()?.ProjectId;
-                if (projectId.HasValue && allIds.Any())
+                var requestList = requests?.ToList() ?? [];
+                if (projectId.HasValue && allIds.Any() && requestList.Count > 1)
                 {
                     var mongoFilter = Builders<AreaActivityEntity>.Filter;
-                    var filter = mongoFilter.Eq(x => x.ProjectId, projectId) & mongoFilter.Nin("Id", allIds);
+                    // Usar x => x.Id para gerar filtro em _id; "Id" como string não bate com o BSON do documento.
+                    var filter = mongoFilter.Eq(x => x.ProjectId, projectId) & mongoFilter.Nin(x => x.Id, allIds);
+
+                    var distinctEmployeeIds = requestList
+                        .Where(x => !string.IsNullOrWhiteSpace(x.EmployeeId))
+                        .Select(x => x.EmployeeId)
+                        .Distinct(StringComparer.Ordinal)
+                        .ToList();
+
+                    // Um único funcionário no body: remove só documentos desse funcionário no projeto que não vieram no POST.
+                    // Vários employeeId no mesmo array: mantém sincronização “todo o projeto” (distribuição entre funcionários).
+                    if (distinctEmployeeIds.Count == 1)
+                        filter &= mongoFilter.Eq(x => x.EmployeeId, distinctEmployeeIds[0]);
 
                     await _areaActivityRepository.DeleteManyAsync(filter, cancellationToken);
                 }
@@ -160,6 +179,60 @@ namespace LimpidusMongoDB.Application.Services
                     : $"{ApplicationErrors.Application_Error_General.Description()}: {ex.Message}";
                 return Result.Error(errorMessage);
             }
+        }
+
+        /// <summary>
+        /// Vários POSTs com <c>id</c> vazio ou migrações repetidas criam o mesmo <c>headerId</c> (WORK_AREA_ID) em documentos distintos.
+        /// Mantém um documento por chave (headerId ou nome se sem headerId), priorizando quem tem mais tarefas.
+        /// </summary>
+        private static List<AreaActivityResponse> DedupeAreasForList(IEnumerable<AreaActivityResponse> areas)
+        {
+            var list = areas?.ToList() ?? new List<AreaActivityResponse>();
+            if (list.Count <= 1)
+                return list;
+
+            static string DedupeKey(AreaActivityResponse a) =>
+                !string.IsNullOrWhiteSpace(a.HeaderId)
+                    ? $"h:{a.HeaderId.Trim()}"
+                    : $"n:{a.Name?.Trim() ?? string.Empty}";
+
+            return list
+                .GroupBy(DedupeKey)
+                .Select(g => g
+                    .OrderByDescending(x => x.Items?.Count() ?? 0)
+                    .ThenByDescending(x => x.Id, StringComparer.Ordinal)
+                    .First())
+                .OrderBy(a => a.OrderBy)
+                .ThenBy(a => a.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Se o documento apontado pelo QR não tem <c>items</c>, tenta outro com o mesmo projeto, <c>headerId</c> e funcionário (duplicados no Mongo).
+        /// </summary>
+        private async Task<AreaActivityEntity> ResolveBestItemSourceAreaAsync(
+            AreaActivityEntity primary,
+            CancellationToken cancellationToken)
+        {
+            if (primary.Items?.Any() == true)
+                return primary;
+
+            if (string.IsNullOrWhiteSpace(primary.HeaderId))
+                return primary;
+
+            var filter = Builders<AreaActivityEntity>.Filter.Eq(x => x.ProjectId, primary.ProjectId)
+                         & Builders<AreaActivityEntity>.Filter.Eq(x => x.HeaderId, primary.HeaderId);
+
+            if (!string.IsNullOrWhiteSpace(primary.EmployeeId))
+                filter &= Builders<AreaActivityEntity>.Filter.Eq(x => x.EmployeeId, primary.EmployeeId);
+
+            var siblings = (await _areaActivityRepository.FindAsync(filter, cancellationToken))?.ToList()
+                           ?? new List<AreaActivityEntity>();
+            var best = siblings
+                .OrderByDescending(x => x.Items?.Count() ?? 0)
+                .FirstOrDefault();
+
+            return best?.Items?.Any() == true ? best : primary;
         }
 
         private async Task<IEnumerable<AreaActivityResponse>> FindByFilterAsync(FilterDefinition<AreaActivityEntity> filter, CancellationToken cancellationToken = default)

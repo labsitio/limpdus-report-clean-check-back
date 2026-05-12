@@ -23,6 +23,11 @@
         public AreaActivityFrequency Frequency { get; set; }
     }
 
+    /// <summary>
+    /// <see cref="WeekDays"/> usa o mesmo critério que <see cref="System.DayOfWeek"/> / JavaScript <c>Date.getDay()</c>:
+    /// 0 = Domingo, 1 = Segunda, …, 5 = Sexta, 6 = Sábado.
+    /// Ex.: domingo a quinta = [0,1,2,3,4]. Segunda a sexta = [1,2,3,4,5]. Não deslocar +1 em cima de índices de checkbox se domingo já for 0.
+    /// </summary>
     public class AreaActivityFrequency
     {
         public string Type { get; set; }

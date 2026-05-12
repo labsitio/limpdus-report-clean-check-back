@@ -23,6 +23,9 @@
         public AreaActivityFrequencyResponse Frequency { get; set; }
     }
 
+    /// <summary>
+    /// 0 = Domingo … 6 = Sábado (alinhado a <see cref="System.DayOfWeek"/> e <c>Date.getDay()</c> no JS).
+    /// </summary>
     public class AreaActivityFrequencyResponse
     {
         public string Type { get; set; }

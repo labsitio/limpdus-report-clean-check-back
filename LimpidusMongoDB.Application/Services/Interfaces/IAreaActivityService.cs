@@ -14,6 +14,7 @@ namespace LimpidusMongoDB.Application.Services.Interfaces
         /// <param name="referenceDate">Se informado (só a data), filtra itens por weekDays.</param>
         Task<Result> GetItemsByAreaIsAsync(string areaId, DateTime? referenceDate = null, CancellationToken cancellationToken = default);
 
+        /// <summary>Ver implementação em <see cref="AreaActivityService.SaveAsync"/> (remoção em massa só com 2+ itens no body).</summary>
         Task<Result> SaveAsync(IEnumerable<AreaActivityRequest> request, CancellationToken cancellationToken = default);
     }
 }

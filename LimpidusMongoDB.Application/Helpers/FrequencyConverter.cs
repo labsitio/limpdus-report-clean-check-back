@@ -51,8 +51,13 @@ namespace LimpidusMongoDB.Application.Helpers
             // D = Domingo (0), S = Segunda (1), T = Terça (2), Q = Quarta (3), 
             // Q = Quinta (4), S = Sexta (5), S = Sábado (6)
             // Mas como há ambiguidade, vamos usar padrões comuns:
-            
-            if (periodo.Contains("LV") || periodo == "LV")
+
+            // "RT" (rotina) no legado = dias úteis; sem isto o fallback letra-a-letra só marcava terça (T).
+            if (periodo.Contains("RT") || periodo == "RT")
+            {
+                weekDays.AddRange(new short[] { 1, 2, 3, 4, 5 });
+            }
+            else if (periodo.Contains("LV") || periodo == "LV")
             {
                 // Segunda a Sexta (L=Segunda, V=Sexta)
                 weekDays.AddRange(new short[] { 1, 2, 3, 4, 5 });
