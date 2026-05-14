@@ -7,7 +7,6 @@ using LimpidusMongoDB.Application.Enums.Errors;
 using LimpidusMongoDB.Application.Helpers;
 using LimpidusMongoDB.Application.Services.Interfaces;
 using MongoDB.Driver;
-using ZstdSharp.Unsafe;
 using System.Globalization;
 
 namespace LimpidusMongoDB.Application.Services
@@ -162,6 +161,20 @@ namespace LimpidusMongoDB.Application.Services
             {
                 foreach (var request in requests)
                 {
+                    if (!string.IsNullOrWhiteSpace(request.EmployeeId)
+                        && !string.IsNullOrWhiteSpace(request.AreaTaskId))
+                    {
+                        var filterDup = Builders<HistoryEntity>.Filter.Eq(x => x.ProjectId, request.ProjectId)
+                            & Builders<HistoryEntity>.Filter.Eq(x => x.EmployeeId, request.EmployeeId)
+                            & Builders<HistoryEntity>.Filter.Eq(x => x.AreaTaskId, request.AreaTaskId)
+                            & Builders<HistoryEntity>.Filter.Gte(x => x.EndDate, request.EndDate.AddSeconds(-15))
+                            & Builders<HistoryEntity>.Filter.Lte(x => x.EndDate, request.EndDate.AddSeconds(15));
+
+                        var candidates = await _historyRepository.FindAsync(filterDup, cancellationToken);
+                        if (candidates.Any(c => IsDuplicateHistorySubmission(c, request)))
+                            continue;
+                    }
+
                     var historyEntity = new HistoryEntity
                     {
                         ProjectId = request.ProjectId,
@@ -199,5 +212,46 @@ namespace LimpidusMongoDB.Application.Services
                 return Result.Error(ApplicationErrors.Application_Error_General.Description());
             }
         }
+
+        /// <summary>
+        /// Mesma ideia do script <c>scripts/mongo/dedupe-history.mongosh.js</c>: mesmo envio (área, fim, itens, justificativa).
+        /// </summary>
+        private static bool IsDuplicateHistorySubmission(HistoryEntity existing, HistoryRequest incoming)
+        {
+            if (existing.ProjectId != incoming.ProjectId)
+                return false;
+            if (!string.Equals(existing.EmployeeId, incoming.EmployeeId, StringComparison.Ordinal))
+                return false;
+            if (!string.Equals(existing.AreaTaskId, incoming.AreaTaskId, StringComparison.Ordinal))
+                return false;
+            if (Math.Abs((existing.EndDate - incoming.EndDate).TotalSeconds) > 5)
+                return false;
+            if (!string.Equals(NormalizeJustification(existing.Justification), NormalizeJustification(incoming.Justification), StringComparison.Ordinal))
+                return false;
+            return string.Equals(
+                ItemsFingerprintFromEntity(existing.Items),
+                ItemsFingerprintFromRequest(incoming.Items),
+                StringComparison.Ordinal);
+        }
+
+        private static string NormalizeJustification(HistoryJustificationEntity? j) =>
+            j == null ? "\u001f" : $"{j.Information ?? string.Empty}\u001f{j.Reason ?? string.Empty}";
+
+        private static string NormalizeJustification(JustificationRequest? j) =>
+            j == null ? "\u001f" : $"{j.Information ?? string.Empty}\u001f{j.Reason ?? string.Empty}";
+
+        private static string ItemsFingerprintFromEntity(IEnumerable<HistoryItemEntity>? items) =>
+            string.Join(
+                "|",
+                (items ?? Enumerable.Empty<HistoryItemEntity>())
+                    .Select(x => $"{x.Id}\u001f{x.Performed}\u001f{x.OrderBy?.ToString() ?? string.Empty}")
+                    .OrderBy(x => x, StringComparer.Ordinal));
+
+        private static string ItemsFingerprintFromRequest(IEnumerable<HistoryItemRequest>? items) =>
+            string.Join(
+                "|",
+                (items ?? Enumerable.Empty<HistoryItemRequest>())
+                    .Select(x => $"{x.Id}\u001f{x.Performed}\u001f{x.OrderBy?.ToString() ?? string.Empty}")
+                    .OrderBy(x => x, StringComparer.Ordinal));
     }
 }
