@@ -18,6 +18,8 @@ namespace LimpidusMongoDB.Api.Configurations
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 option.IncludeXmlComments(xmlPath);
+
+                option.AddSwaggerBearer();
             });
         }
     }

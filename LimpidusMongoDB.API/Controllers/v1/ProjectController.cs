@@ -3,24 +3,29 @@ using LimpidusMongoDB.Application.Contracts.Requests;
 using LimpidusMongoDB.Application.Contracts.Responses;
 using LimpidusMongoDB.Application.Helpers;
 using LimpidusMongoDB.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace LimpidusMongoDB.Api.Controllers.v1
 {
+    [Authorize]
     [ApiController]
     [Route("v1/[controller]/")]
     public class ProjectController : ControllerBase
     {
         private readonly IProjectService _projectService;
         private readonly IAreaActivityService _areaActivityService;
+        private readonly IProjectAccessService _projectAccess;
 
         public ProjectController(
             IProjectService projectService,
-            IAreaActivityService areaActivityService)
+            IAreaActivityService areaActivityService,
+            IProjectAccessService projectAccess)
         {
             _projectService = projectService;
             _areaActivityService = areaActivityService;
+            _projectAccess = projectAccess;
         }
 
         //TODO: Quando subir para um servidor, ajustar o remarks removendo a frase "(local por enquanto)".
@@ -69,8 +74,18 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         public async Task<IActionResult> GetAllProjects()
         {
             var result = await _projectService.GetAllProjects();
+            if (!result.Success)
+                return BadRequest(result);
 
-            return result.Success ? Ok(result) : BadRequest(result);
+            if (!_projectAccess.IsAdmin(User) && result.Data is IEnumerable<ProjectResponse> projects)
+            {
+                var filtered = projects
+                    .Where(p => _projectAccess.CanAccessLegacyProject(User, p.LegacyId))
+                    .ToList();
+                return Ok(LimpidusMongoDB.Application.Contracts.Result.Ok(data: filtered));
+            }
+
+            return Ok(result);
         }
 
         /// <summary>
@@ -115,6 +130,9 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         [SwaggerResponse((int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetProjectByLegadyId(int legacyId)
         {
+            if (!_projectAccess.CanAccessLegacyProject(User, legacyId))
+                return Forbid();
+
             var result = await _projectService.GetByLegacyIdAsync(legacyId);
 
             return result.Success ? Ok(result) : BadRequest(result);
@@ -178,6 +196,9 @@ namespace LimpidusMongoDB.Api.Controllers.v1
             [FromQuery] DateTime? referenceDate,
             CancellationToken cancellationToken)
         {
+            if (!_projectAccess.CanAccessLegacyProject(User, legacyId))
+                return Forbid();
+
             var scheduleDate = referenceDate?.Date ?? BrazilScheduleDate.TodayInSaoPaulo();
             var result = await _areaActivityService.GetByProjectIdAndEmployeeIdAsync(legacyId, employeeId, scheduleDate, cancellationToken);
 
@@ -227,8 +248,14 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         public async Task<IActionResult> GetProjectById([FromRoute] string id)
         {
             var result = await _projectService.GetByIdAsync(id);
+            if (!result.Success)
+                return BadRequest(result);
 
-            return result.Success ? Ok(result) : BadRequest(result);
+            if (result.Data is ProjectResponse project
+                && !_projectAccess.CanAccessLegacyProject(User, project.LegacyId))
+                return Forbid();
+
+            return Ok(result);
         }
 
         /// <summary>
@@ -283,6 +310,9 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         [SwaggerResponse((int)HttpStatusCode.InternalServerError)]
         public async Task<IActionResult> GetAreaActivitesByProject([FromRoute] int id, [FromQuery] DateTime? referenceDate)
         {
+            if (!_projectAccess.CanAccessLegacyProject(User, id))
+                return Forbid();
+
             var scheduleDate = referenceDate?.Date ?? BrazilScheduleDate.TodayInSaoPaulo();
             var result = await _areaActivityService.GetByProjectIdAsync(id, scheduleDate);
 
