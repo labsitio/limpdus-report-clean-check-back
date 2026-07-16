@@ -29,15 +29,18 @@ namespace LimpidusMongoDB.Application.Services
             if (request == null || string.IsNullOrWhiteSpace(request.Login) || string.IsNullOrWhiteSpace(request.Password))
                 return Result.Error("Login e senha são obrigatórios.");
 
-            var type = (request.Type ?? AuthLoginTypes.Project).Trim().ToLowerInvariant();
+            var type = (request.Type ?? AuthLoginTypes.Auto).Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(type))
+                type = AuthLoginTypes.Auto;
 
             try
             {
                 return type switch
                 {
+                    AuthLoginTypes.Auto => await LoginAutoAsync(request.Login.Trim(), request.Password, cancellationToken),
                     AuthLoginTypes.Franqueado => await LoginFranqueadoAsync(request.Login.Trim(), request.Password, cancellationToken),
                     AuthLoginTypes.Project => await LoginProjectAsync(request.Login.Trim(), request.Password, cancellationToken),
-                    _ => Result.Error("Tipo de login inválido. Use 'franqueado' ou 'project'.")
+                    _ => Result.Error("Tipo de login invalido. Use auto, franqueado ou project.")
                 };
             }
             catch (InvalidOperationException ex)
@@ -48,6 +51,16 @@ namespace LimpidusMongoDB.Application.Services
             {
                 return Result.Error("Falha ao autenticar. Verifique a conexão SQL / configuração.");
             }
+        }
+
+
+        private async Task<Result> LoginAutoAsync(string login, string password, CancellationToken cancellationToken)
+        {
+            var franqueado = await LoginFranqueadoAsync(login, password, cancellationToken);
+            if (franqueado.Success)
+                return franqueado;
+
+            return await LoginProjectAsync(login, password, cancellationToken);
         }
 
         private async Task<Result> LoginFranqueadoAsync(string login, string password, CancellationToken cancellationToken)

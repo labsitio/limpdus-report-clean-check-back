@@ -16,8 +16,8 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         public AuthController(IAuthService authService) => _authService = authService;
 
         /// <summary>
-        /// Login unificado: type = "franqueado" (FRANQ_LOGIN + MD5) ou "project" (WORK_HEADER LOGIN/SENHA).
-        /// Retorna JWT com role Franqueado | Admin | ProjectViewer.
+        /// Login unificado. type omitido/auto: tenta FRANQ_LOGIN e depois WORK_HEADER.
+        /// type franqueado ou project forca um caminho. Retorna JWT Franqueado | Admin | ProjectViewer.
         /// </summary>
         [HttpPost("login")]
         [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(LoginResponse))]

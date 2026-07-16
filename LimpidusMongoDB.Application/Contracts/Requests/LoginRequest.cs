@@ -4,11 +4,7 @@ namespace LimpidusMongoDB.Application.Contracts.Requests
 {
     public class LoginRequest
     {
-        /// <summary>
-        /// "franqueado" (FRANQ_LOGIN) ou "project" (WORK_HEADER LOGIN/SENHA).
-        /// </summary>
-        [Required]
-        public string Type { get; set; } = "project";
+        public string Type { get; set; } = "auto";
 
         [Required]
         public string Login { get; set; } = string.Empty;

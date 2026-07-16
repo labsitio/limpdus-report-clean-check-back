@@ -27,6 +27,7 @@ namespace LimpidusMongoDB.Application.Auth
 
     public static class AuthLoginTypes
     {
+        public const string Auto = "auto";
         public const string Franqueado = "franqueado";
         public const string Project = "project";
     }
