@@ -17,7 +17,30 @@ namespace LimpidusMongoDB.Api.Configurations
 
             var key = !string.IsNullOrWhiteSpace(jwt.Key)
                 ? jwt.Key
-                : configuration["Jwt__Key"] ?? Environment.GetEnvironmentVariable("Jwt__Key") ?? string.Empty;
+                : configuration["Jwt:Key"]
+                  ?? configuration["Jwt__Key"]
+                  ?? Environment.GetEnvironmentVariable("Jwt__Key")
+                  ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(key) || key.Length < 32
+                || key.StartsWith("CHANGE_ME", StringComparison.OrdinalIgnoreCase)
+                || key.StartsWith("TEMP_DEV_KEY", StringComparison.OrdinalIgnoreCase)
+                || key.StartsWith("DEV_ONLY_", StringComparison.OrdinalIgnoreCase))
+            {
+                // Em produção o App Setting Jwt__Key (ou Jwt:Key) é obrigatório.
+                // Em Development mantém fallback local para não bloquear o time.
+                var env = configuration["ASPNETCORE_ENVIRONMENT"]
+                    ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+                    ?? "Production";
+                if (!string.Equals(env, "Development", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(
+                        "Jwt:Key inválida/ausente. Defina o App Setting Jwt__Key (>=32 chars, sem placeholder CHANGE_ME).");
+                }
+
+                if (string.IsNullOrWhiteSpace(key) || key.Length < 32)
+                    key = "DEV_ONLY_CHANGE_ME_CLEANCHECK_JWT_KEY_32+";
+            }
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -30,11 +53,20 @@ namespace LimpidusMongoDB.Api.Configurations
                         ValidateLifetime = true,
                         ValidIssuer = jwt.Issuer,
                         ValidAudience = jwt.Audience,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                            key.Length >= 32 ? key : "TEMP_DEV_KEY_REPLACE_IN_APPSETTINGS_MIN_32")),
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)),
                         ClockSkew = TimeSpan.FromMinutes(1)
                     };
                 });
+
+            // Garante que IOptions<JwtSettings> use a mesma key resolvida (login/token).
+            services.PostConfigure<JwtSettings>(settings =>
+            {
+                settings.Key = key;
+                if (string.IsNullOrWhiteSpace(settings.Issuer))
+                    settings.Issuer = jwt.Issuer;
+                if (string.IsNullOrWhiteSpace(settings.Audience))
+                    settings.Audience = jwt.Audience;
+            });
 
             services.AddAuthorization(options =>
             {
