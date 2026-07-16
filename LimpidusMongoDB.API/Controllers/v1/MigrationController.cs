@@ -1,10 +1,13 @@
 using System.Net;
+using LimpidusMongoDB.Application.Auth;
 using LimpidusMongoDB.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace LimpidusMongoDB.Api.Controllers.v1
 {
+    [Authorize(Policy = AuthPolicies.AdminOnly)]
     [ApiController]
     [Route("v1/[controller]")]
     public class MigrationController : ControllerBase

@@ -48,20 +48,27 @@ Edite o arquivo `LimpidusMongoDB.API/appsettings.json` ou `appsettings.Developme
 ### 2. Executar a API
 
 ```bash
-# Navegar para a pasta da API
-cd LimpidusMongoDB.API
-
-# Restaurar dependências
+# Na raiz do repositório (recomendado)
 dotnet restore
-
-# Executar
-dotnet run
+dotnet run --project LimpidusMongoDB.API/LimpidusMongoDB.Api.csproj --launch-profile LimpidusMongoDB.API
 ```
 
-A API estará disponível em:
-- HTTP: `http://localhost:5000`
-- HTTPS: `https://localhost:5001`
-- Swagger: `https://localhost:5001/swagger`
+Por padrão o perfil `LimpidusMongoDB.API` escuta em **HTTP** em todas as interfaces:
+
+- Base: `http://0.0.0.0:5234`
+- Swagger (no PC): `http://localhost:5234/swagger`
+
+Para forçar a URL sem depender do perfil:
+
+```bash
+dotnet run --project LimpidusMongoDB.API/LimpidusMongoDB.Api.csproj --urls "http://0.0.0.0:5234"
+```
+
+### React Native / Android (emulador ou celular)
+
+Instruções completas (firewall, `10.0.2.2`, IP da LAN, CORS): [DEV_MOBILE_ANDROID.md](./LimpidusMongoDB.API/DEV_MOBILE_ANDROID.md).
+
+Exemplo de `BASE_URL` e `ProjectService` para copiar ao app: pasta [examples/react-native/](./examples/react-native/).
 
 ### 3. Executar Testes
 

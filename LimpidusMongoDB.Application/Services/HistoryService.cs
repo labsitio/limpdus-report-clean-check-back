@@ -161,6 +161,9 @@ namespace LimpidusMongoDB.Application.Services
             {
                 foreach (var request in requests)
                 {
+                    if (request.Items == null || !request.Items.Any())
+                        continue;
+
                     if (!string.IsNullOrWhiteSpace(request.EmployeeId)
                         && !string.IsNullOrWhiteSpace(request.AreaTaskId))
                     {

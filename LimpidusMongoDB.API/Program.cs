@@ -4,6 +4,9 @@
 // - Rode a API com: dotnet run --urls "http://0.0.0.0:5234"
 //   (ou dotnet run com o perfil LimpidusMongoDB.API: applicationUrl em launchSettings).
 // Veja também: LimpidusMongoDB.API/DEV_MOBILE_ANDROID.md
+//
+// Auth: endpoints exigem JWT (exceto /v1/Auth/* e /v1/HealthCheck).
+// Mobile/campo: POST /v1/Auth/project com LOGIN/SENHA do WORK_HEADER → role ProjectViewer.
 
 using LimpidusMongoDB.Api.Configurations;
 using LimpidusMongoDB.Application.Helpers;
@@ -24,6 +27,8 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddJwtAuth(builder.Configuration);
 builder.Services.AddServices();
 builder.Services.AddSwagger();
 builder.Services.AddMvc().AddJsonOptions(options =>
@@ -41,6 +46,7 @@ app.UseCors();
 
 // Sem UseHttpsRedirection: clientes mobile usam HTTP na LAN (ex.: http://192.168.x.x:5234).
 // Evita "redirect" inesperado quando a API só expõe HTTP em desenvolvimento.
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

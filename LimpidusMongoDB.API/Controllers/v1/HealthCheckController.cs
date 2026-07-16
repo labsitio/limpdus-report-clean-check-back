@@ -1,4 +1,5 @@
 ﻿using LimpidusMongoDB.Application.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
@@ -6,6 +7,7 @@ using System.Net;
 namespace LimpidusMongoDB.Api.Controllers.v1
 {
 
+    [AllowAnonymous]
     [ApiController]
     [Route("v1/[controller]/")]
     public class HealthCheckController : ControllerBase
