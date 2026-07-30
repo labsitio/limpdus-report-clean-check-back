@@ -71,12 +71,41 @@ namespace LimpidusMongoDB.Application.Services
                 return Result.Error("Usuário ou senha inválidos.");
 
             var isAdmin = await _sqlAuth.IsAdminAsync(franqueado.Id, cancellationToken);
-            // Admin: todos os projetos migrados (Mongo), como bypass do LimpCalc checkAdmin.
-            // Franqueado: só ID_DONO / WORK_HEADER_SHARE.
-            var projects = isAdmin
-                ? await GetAdminProjectsAsync(cancellationToken)
-                : await _sqlAuth.GetFranqueadoProjectsAsync(franqueado.Id, cancellationToken);
-            var role = isAdmin ? AuthRoles.Admin : AuthRoles.Franqueado;
+
+            string role;
+            IReadOnlyList<AllowedProjectResponse> projects;
+            bool bypassAllowedProjects;
+
+            if (isAdmin)
+            {
+                // Admin: todos os projetos migrados (Mongo), bypass por role.
+                role = AuthRoles.Admin;
+                projects = await GetAdminProjectsAsync(cancellationToken);
+                bypassAllowedProjects = true;
+            }
+            else
+            {
+                var hierarchy = await _sqlAuth.GetHierarchyContextAsync(franqueado.Id, cancellationToken);
+                if (hierarchy.IsConsultor)
+                {
+                    // Consultor: carteira hierárquica (nós abaixo + VER_NIVEL), relatório completo.
+                    role = AuthRoles.Consultor;
+                    projects = await IntersectWithMongoIfAvailableAsync(
+                        await _sqlAuth.GetConsultorProjectsAsync(franqueado.Id, cancellationToken),
+                        cancellationToken);
+                }
+                else
+                {
+                    // Franqueado folha: só ID_DONO + WORK_HEADER_SHARE.
+                    role = AuthRoles.Franqueado;
+                    projects = await IntersectWithMongoIfAvailableAsync(
+                        await _sqlAuth.GetFranqueadoProjectsAsync(franqueado.Id, cancellationToken),
+                        cancellationToken);
+                }
+
+                bypassAllowedProjects = false;
+            }
+
             var primary = PickPrimaryProject(projects);
 
             var (token, expires) = _jwtTokenService.CreateToken(new AuthTokenPayload
@@ -86,8 +115,8 @@ namespace LimpidusMongoDB.Application.Services
                 FranqId = franqueado.Id,
                 LegacyProjectId = primary?.Id,
                 DisplayName = franqueado.Nome,
-                AllowedProjectIds = isAdmin
-                    ? Array.Empty<int>() // bypass por role em IProjectAccessService
+                AllowedProjectIds = bypassAllowedProjects
+                    ? Array.Empty<int>()
                     : projects.Select(p => p.Id).ToArray()
             });
 
@@ -126,6 +155,27 @@ namespace LimpidusMongoDB.Application.Services
             }
 
             return await _sqlAuth.GetAllProjectsAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Mantém só projetos que existem no Mongo (como a lista do Admin), se houver dados migrados.
+        /// </summary>
+        private async Task<IReadOnlyList<AllowedProjectResponse>> IntersectWithMongoIfAvailableAsync(
+            IReadOnlyList<AllowedProjectResponse> sqlProjects,
+            CancellationToken cancellationToken)
+        {
+            if (sqlProjects == null || sqlProjects.Count == 0)
+                return sqlProjects ?? Array.Empty<AllowedProjectResponse>();
+
+            var mongoProjects = await _projectRepository.FindAllAsync();
+            if (mongoProjects == null || !mongoProjects.Any())
+                return sqlProjects;
+
+            var mongoIds = mongoProjects.Select(p => p.LegacyId).ToHashSet();
+            return sqlProjects
+                .Where(p => mongoIds.Contains(p.Id))
+                .OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
 
         /// <summary>

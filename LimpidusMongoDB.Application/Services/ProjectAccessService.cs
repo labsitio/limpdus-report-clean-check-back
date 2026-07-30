@@ -20,6 +20,7 @@ namespace LimpidusMongoDB.Application.Services
                 return projectId.HasValue && projectId.Value == legacyProjectId;
             }
 
+            // Franqueado e Consultor: apenas allowedProjectIds (sem bypass Admin).
             var allowed = GetAllowedProjectIds(user);
             return allowed.Contains(legacyProjectId);
         }
@@ -29,13 +30,23 @@ namespace LimpidusMongoDB.Application.Services
             if (user?.Identity?.IsAuthenticated != true)
                 return false;
 
-            return IsAdmin(user) || IsFranqueado(user);
+            return IsAdmin(user) || IsFranqueado(user) || IsConsultor(user);
         }
 
         public bool CanSeeSensitiveHistory(ClaimsPrincipal user) => CanExport(user);
 
-        public bool IsFranqueado(ClaimsPrincipal user) =>
-            string.Equals(GetRole(user), AuthRoles.Franqueado, StringComparison.OrdinalIgnoreCase);
+        /// <summary>
+        /// Franqueado ou Consultor (login FRANQ_LOGIN com relatório completo).
+        /// </summary>
+        public bool IsFranqueado(ClaimsPrincipal user)
+        {
+            var role = GetRole(user);
+            return string.Equals(role, AuthRoles.Franqueado, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(role, AuthRoles.Consultor, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public bool IsConsultor(ClaimsPrincipal user) =>
+            string.Equals(GetRole(user), AuthRoles.Consultor, StringComparison.OrdinalIgnoreCase);
 
         public string? GetRole(ClaimsPrincipal user) =>
             user?.FindFirst(ClaimTypes.Role)?.Value

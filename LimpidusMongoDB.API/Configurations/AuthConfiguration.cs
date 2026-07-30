@@ -75,7 +75,7 @@ namespace LimpidusMongoDB.Api.Configurations
                     .Build();
 
                 options.AddPolicy(AuthPolicies.CanExportReports, policy =>
-                    policy.RequireRole(AuthRoles.Franqueado, AuthRoles.Admin));
+                    policy.RequireRole(AuthRoles.Franqueado, AuthRoles.Consultor, AuthRoles.Admin));
 
                 options.AddPolicy(AuthPolicies.AdminOnly, policy =>
                     policy.RequireRole(AuthRoles.Admin));
