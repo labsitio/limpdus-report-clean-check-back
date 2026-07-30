@@ -17,7 +17,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
 
         /// <summary>
         /// Login unificado. type omitido/auto: tenta FRANQ_LOGIN e depois WORK_HEADER.
-        /// type franqueado ou project forca um caminho. Retorna JWT Franqueado | Admin | ProjectViewer.
+        /// type franqueado ou project forca um caminho. Retorna JWT Franqueado | Consultor | Admin | ProjectViewer.
         /// </summary>
         [HttpPost("login")]
         [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(LoginResponse))]

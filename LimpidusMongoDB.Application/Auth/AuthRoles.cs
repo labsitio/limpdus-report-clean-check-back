@@ -3,11 +3,13 @@ namespace LimpidusMongoDB.Application.Auth
     public static class AuthRoles
     {
         public const string Franqueado = "Franqueado";
+        public const string Consultor = "Consultor";
         public const string Admin = "Admin";
         public const string ProjectViewer = "ProjectViewer";
 
-        public const string FranqueadoOrAdmin = Franqueado + "," + Admin;
-        public const string AnyAuthenticated = Franqueado + "," + Admin + "," + ProjectViewer;
+        /// <summary>Franqueado + Consultor + Admin (export / relatório completo).</summary>
+        public const string FranqueadoOrAdmin = Franqueado + "," + Consultor + "," + Admin;
+        public const string AnyAuthenticated = Franqueado + "," + Consultor + "," + Admin + "," + ProjectViewer;
     }
 
     public static class AuthClaims

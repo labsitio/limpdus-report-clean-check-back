@@ -433,3 +433,6 @@ MigrationBackup/
 # End of https://www.gitignore.io/api/intellij,visualstudio
 
 .DS_Store/
+_publish_diag/
+_publish_diag.zip
+

@@ -32,6 +32,80 @@ namespace LimpidusMongoDB.Application.Services
             WHERE sh.FRANQ_LOGIN = @franqId
             ORDER BY Name";
 
+        private const string QueryHierarchyContext = @"
+            SELECT
+                fl.ID AS FranqId,
+                fl.TBL_NIVEIS_GRUPO_ID AS GrupoId,
+                CAST(CASE WHEN ISNULL(fl.VER_NIVEL, 0) = 1 THEN 1 ELSE 0 END AS BIT) AS VerNivel,
+                CAST(CASE WHEN EXISTS (
+                    SELECT 1
+                    FROM TBL_NIVEIS_GRUPO child WITH(NOLOCK)
+                    WHERE child.FATHER_ID = fl.TBL_NIVEIS_GRUPO_ID
+                ) THEN 1 ELSE 0 END AS BIT) AS HasChildren
+            FROM FRANQ_LOGIN fl WITH(NOLOCK)
+            WHERE fl.ID = @franqId";
+
+        /// <summary>
+        /// Carteira consultor (LimpCalc Niveis.Children + Project.List):
+        /// nós descendentes do TBL_NIVEIS_GRUPO do usuário; se VER_NIVEL, inclui o próprio nó;
+        /// donos via VIEW_FRANQ_NIVEIS filtrados por regiões do consultor; + ID_DONO próprio + share.
+        /// </summary>
+        private const string QueryConsultorProjects = @"
+            ;WITH UserCtx AS (
+                SELECT
+                    fl.ID AS FranqId,
+                    fl.TBL_NIVEIS_GRUPO_ID AS GrupoId,
+                    CAST(CASE WHEN ISNULL(fl.VER_NIVEL, 0) = 1 THEN 1 ELSE 0 END AS BIT) AS VerNivel
+                FROM FRANQ_LOGIN fl WITH(NOLOCK)
+                WHERE fl.ID = @franqId
+            ),
+            Descendants AS (
+                SELECT g.TBL_NIVEIS_GRUPO_ID
+                FROM TBL_NIVEIS_GRUPO g WITH(NOLOCK)
+                INNER JOIN UserCtx u ON g.FATHER_ID = u.GrupoId
+                WHERE u.GrupoId IS NOT NULL
+
+                UNION ALL
+
+                SELECT c.TBL_NIVEIS_GRUPO_ID
+                FROM TBL_NIVEIS_GRUPO c WITH(NOLOCK)
+                INNER JOIN Descendants d ON c.FATHER_ID = d.TBL_NIVEIS_GRUPO_ID
+            ),
+            Scope AS (
+                SELECT TBL_NIVEIS_GRUPO_ID FROM Descendants
+                UNION
+                SELECT u.GrupoId
+                FROM UserCtx u
+                WHERE u.VerNivel = 1 AND u.GrupoId IS NOT NULL
+            ),
+            UserRegions AS (
+                SELECT fr.TBL_REGIOES_ID
+                FROM FRANQ_REGIOES fr WITH(NOLOCK)
+                WHERE fr.FRANQ_ID = @franqId
+            ),
+            Owners AS (
+                SELECT DISTINCT v.FRANQ_LOGIN_ID AS OwnerId
+                FROM VIEW_FRANQ_NIVEIS v WITH(NOLOCK)
+                INNER JOIN Scope s ON v.TBL_NIVEIS_GRUPO_ID = s.TBL_NIVEIS_GRUPO_ID
+                WHERE ISNULL(v.ATIVO, 0) = 1
+                  AND (
+                      NOT EXISTS (SELECT 1 FROM UserRegions)
+                      OR v.TBL_REGIOES_ID IN (SELECT TBL_REGIOES_ID FROM UserRegions)
+                  )
+                UNION
+                SELECT @franqId
+            )
+            SELECT DISTINCT wh.WORK_HEADER_ID AS Id, wh.NOMEPROJETO AS Name
+            FROM WORK_HEADER wh WITH(NOLOCK)
+            INNER JOIN Owners o ON wh.ID_DONO = o.OwnerId
+            UNION
+            SELECT wh.WORK_HEADER_ID AS Id, wh.NOMEPROJETO AS Name
+            FROM WORK_HEADER_SHARE sh WITH(NOLOCK)
+            INNER JOIN WORK_HEADER wh WITH(NOLOCK) ON wh.WORK_HEADER_ID = sh.WORK_HEADER_ID
+            WHERE sh.FRANQ_LOGIN = @franqId
+            ORDER BY Name
+            OPTION (MAXRECURSION 100)";
+
         /// <summary>
         /// Todos os projetos (Admin). Preferência de ordenação: N3 (NIVEL_PROJETO=3), depois nome.
         /// </summary>
@@ -118,10 +192,45 @@ namespace LimpidusMongoDB.Application.Services
             return result != null && result != DBNull.Value;
         }
 
+        public async Task<FranqueadoHierarchyContext> GetHierarchyContextAsync(int franqId, CancellationToken cancellationToken = default)
+        {
+            EnsureConfigured();
+
+            await using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync(cancellationToken);
+
+            await using var command = new SqlCommand(QueryHierarchyContext, connection);
+            command.Parameters.AddWithValue("@franqId", franqId);
+
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            if (!await reader.ReadAsync(cancellationToken))
+            {
+                return new FranqueadoHierarchyContext { FranqId = franqId };
+            }
+
+            var grupoOrdinal = reader.GetOrdinal("GrupoId");
+            return new FranqueadoHierarchyContext
+            {
+                FranqId = reader.GetInt32(reader.GetOrdinal("FranqId")),
+                GrupoId = reader.IsDBNull(grupoOrdinal) ? null : Convert.ToInt32(reader.GetValue(grupoOrdinal)),
+                VerNivel = Convert.ToBoolean(reader["VerNivel"]),
+                HasChildren = Convert.ToBoolean(reader["HasChildren"])
+            };
+        }
+
         public async Task<IReadOnlyList<AllowedProjectResponse>> GetFranqueadoProjectsAsync(int franqId, CancellationToken cancellationToken = default)
         {
             EnsureConfigured();
             return await ReadProjectsAsync(QueryFranqueadoProjects, cmd =>
+            {
+                cmd.Parameters.AddWithValue("@franqId", franqId);
+            }, cancellationToken);
+        }
+
+        public async Task<IReadOnlyList<AllowedProjectResponse>> GetConsultorProjectsAsync(int franqId, CancellationToken cancellationToken = default)
+        {
+            EnsureConfigured();
+            return await ReadProjectsAsync(QueryConsultorProjects, cmd =>
             {
                 cmd.Parameters.AddWithValue("@franqId", franqId);
             }, cancellationToken);
