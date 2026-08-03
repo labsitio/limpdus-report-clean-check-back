@@ -67,7 +67,9 @@ namespace LimpidusMongoDB.Api.Controllers.v1
             if (!_projectAccess.CanAccessLegacyProject(User, legacyId))
                 return Forbid();
 
-            ApplyFranqueadoCompletedOnlyRule(request);
+            var ruleError = ApplyProjectViewerHistoryRules(request);
+            if (ruleError != null)
+                return BadRequest(new { success = false, message = ruleError });
 
             var result = await _historyService.GetByProjectIdAsync(legacyId, request, cancellationToken);
             if (!result.Success)
@@ -102,8 +104,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
             if (!_projectAccess.CanExport(User))
                 return Forbid();
 
-            ApplyFranqueadoCompletedOnlyRule(request);
-
+            // Export é só Franqueado/Consultor/Admin — sem regras de ProjectViewer.
             var result = await _historyService.GetHistoriesInSpreadsheet(legacyId, request, cancellationToken);
 
             if (!result.Success)
@@ -140,10 +141,32 @@ namespace LimpidusMongoDB.Api.Controllers.v1
             return result.Success ? Created(Request.Path, result) : BadRequest(result);
         }
 
-        private void ApplyFranqueadoCompletedOnlyRule(HistoryQueryRequest request)
+        /// <summary>
+        /// Cliente (ProjectViewer): só tarefas concluídas e intervalo máximo de 30 dias.
+        /// Franqueado / Consultor / Admin: veem todos os status; sem limite de intervalo aqui.
+        /// </summary>
+        /// <returns>Mensagem de erro se o range for inválido; null se ok.</returns>
+        private string? ApplyProjectViewerHistoryRules(HistoryQueryRequest request)
         {
-            if (_projectAccess.IsFranqueado(User))
-                request.Status = true;
+            if (!_projectAccess.IsProjectViewer(User))
+                return null;
+
+            request.Status = true;
+
+            if (request.DateStart.HasValue && request.DateEnd.HasValue)
+            {
+                var start = request.DateStart.Value.Date;
+                var end = request.DateEnd.Value.Date;
+                if (end < start)
+                    return "A data final deve ser maior ou igual à data inicial.";
+
+                if ((end - start).TotalDays > ProjectViewerMaxRangeDays)
+                    return $"O intervalo máximo permitido para cliente é de {ProjectViewerMaxRangeDays} dias.";
+            }
+
+            return null;
         }
+
+        private const int ProjectViewerMaxRangeDays = 30;
     }
 }
