@@ -120,6 +120,53 @@ namespace LimpidusMongoDB.Application.Services
             }
         }
 
+        public async Task<int?> GetMaxHistoryRangeDaysAsync(int legacyId, CancellationToken cancellationToken = default)
+        {
+            var project = await _projectRepository.FindOneAsync(
+                Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, legacyId),
+                cancellationToken);
+            return project?.MaxHistoryRangeDays;
+        }
+
+        public async Task<int> GetEffectiveProjectViewerMaxDaysAsync(int legacyId, CancellationToken cancellationToken = default)
+        {
+            var overrideDays = await GetMaxHistoryRangeDaysAsync(legacyId, cancellationToken);
+            return HistoryRangeLimits.EffectiveProjectViewerDays(overrideDays);
+        }
+
+        public async Task<Result> SetMaxHistoryRangeDaysAsync(
+            int legacyId,
+            int? maxHistoryRangeDays,
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (maxHistoryRangeDays is <= 0)
+                    return Result.Error("maxHistoryRangeDays deve ser um inteiro positivo, ou null para o default.");
+
+                var filter = Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, legacyId);
+                var project = await _projectRepository.FindOneAsync(filter, cancellationToken);
+                if (project == null)
+                    return Result.Error(ProjectErrors.Project_Error_NotFound.Description());
+
+                var update = BaseEntity.UpdateDateDefinition(
+                    Builders<ProjectEntity>.Update.Set(x => x.MaxHistoryRangeDays, maxHistoryRangeDays));
+
+                await _projectRepository.UpdateOneAsync(filter, update, cancellationToken);
+                return Result.Ok(data: new HistoryRangeResponse
+                {
+                    LegacyId = legacyId,
+                    MaxHistoryRangeDays = maxHistoryRangeDays,
+                    DefaultProjectViewerDays = HistoryRangeLimits.ProjectViewerDefaultDays,
+                    EffectiveMaxDays = HistoryRangeLimits.EffectiveProjectViewerDays(maxHistoryRangeDays)
+                });
+            }
+            catch (Exception)
+            {
+                return Result.Error(ApplicationErrors.Application_Error_General.Description());
+            }
+        }
+
         #region Private methods
 
         private async Task<ProjectResponse> GetProjectDetail(ProjectEntity projectEntity)

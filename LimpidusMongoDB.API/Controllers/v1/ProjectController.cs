@@ -1,4 +1,5 @@
 using System.Net;
+using LimpidusMongoDB.Application.Auth;
 using LimpidusMongoDB.Application.Contracts.Requests;
 using LimpidusMongoDB.Application.Contracts.Responses;
 using LimpidusMongoDB.Application.Helpers;
@@ -134,6 +135,64 @@ namespace LimpidusMongoDB.Api.Controllers.v1
                 return Forbid();
 
             var result = await _projectService.GetByLegacyIdAsync(legacyId);
+
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// GET limite de historico do projeto (override + teto efetivo para o usuario atual).
+        /// Persistencia: campo <c>maxHistoryRangeDays</c> no documento Mongo <c>project</c>.
+        /// </summary>
+        [HttpGet("legacyId/{legacyId}/history-range")]
+        [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(HistoryRangeResponse))]
+        [SwaggerResponse((int)HttpStatusCode.Forbidden)]
+        [SwaggerResponse((int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> GetHistoryRange(
+            [FromRoute] int legacyId,
+            CancellationToken cancellationToken)
+        {
+            if (!_projectAccess.CanAccessLegacyProject(User, legacyId))
+                return Forbid();
+
+            var overrideDays = await _projectService.GetMaxHistoryRangeDaysAsync(legacyId, cancellationToken);
+            int? effective = null;
+            if (_projectAccess.IsAdmin(User))
+                effective = null;
+            else if (_projectAccess.IsFranqueado(User) || _projectAccess.IsConsultor(User))
+                effective = HistoryRangeLimits.FranqueadoMaxDays;
+            else if (_projectAccess.IsProjectViewer(User))
+                effective = HistoryRangeLimits.EffectiveProjectViewerDays(overrideDays);
+
+            return Ok(LimpidusMongoDB.Application.Contracts.Result.Ok(data: new HistoryRangeResponse
+            {
+                LegacyId = legacyId,
+                MaxHistoryRangeDays = overrideDays,
+                DefaultProjectViewerDays = HistoryRangeLimits.ProjectViewerDefaultDays,
+                EffectiveMaxDays = effective
+            }));
+        }
+
+        /// <summary>
+        /// PUT override do range maximo de historico do ProjectViewer neste projeto (somente Admin).
+        /// Body: <c>{ "maxHistoryRangeDays": 180 }</c> ou <c>null</c> para voltar ao default 90.
+        /// </summary>
+        [Authorize(Policy = AuthPolicies.AdminOnly)]
+        [HttpPut("legacyId/{legacyId}/history-range")]
+        [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(HistoryRangeResponse))]
+        [SwaggerResponse((int)HttpStatusCode.Forbidden)]
+        [SwaggerResponse((int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> SetHistoryRange(
+            [FromRoute] int legacyId,
+            [FromBody] SetHistoryRangeRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (!_projectAccess.IsAdmin(User))
+                return Forbid();
+
+            var result = await _projectService.SetMaxHistoryRangeDaysAsync(
+                legacyId,
+                request?.MaxHistoryRangeDays,
+                cancellationToken);
 
             return result.Success ? Ok(result) : BadRequest(result);
         }

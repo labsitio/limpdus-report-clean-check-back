@@ -88,3 +88,36 @@ Content-Type: application/json
 ```
 
 Regras: só role Admin; não é permitido remover o próprio Admin; outros grupos do franqueado não são alterados.
+
+## Range de histórico (datas)
+
+| Perfil | Intervalo máximo |
+|--------|------------------|
+| **ProjectViewer (cliente)** | **90 dias** (default); override por projeto via Admin |
+| **Franqueado / Consultor** | **365 dias** |
+| **Admin** | sem limite rígido |
+
+### Persistência do override
+
+Campo nullable `maxHistoryRangeDays` no documento Mongo da collection `project` (`ProjectEntity`).  
+Não há coluna SQL: o Clean Check já resolve o projeto por `legacyId` (WORK_HEADER) no Mongo.  
+Se `null` ou ausente → cliente usa 90 dias. Valor positivo (ex. `180`) sobrescreve só para ProjectViewer naquele projeto.
+
+### API (Admin configura; qualquer autenticado com acesso ao projeto pode ler)
+
+```http
+GET /v1/Project/legacyId/{legacyId}/history-range
+Authorization: Bearer {token}
+```
+
+```http
+PUT /v1/Project/legacyId/{legacyId}/history-range
+Authorization: Bearer {tokenAdmin}
+Content-Type: application/json
+
+{ "maxHistoryRangeDays": 180 }
+```
+
+`null` no body remove o override (volta ao default 90 para o cliente).
+
+O login do ProjectViewer também devolve `maxHistoryRangeDays` já resolvido (override ?? 90). Franqueado/Consultor recebem `365`; Admin recebe `null`.

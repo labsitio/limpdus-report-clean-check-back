@@ -19,6 +19,7 @@ namespace LimpidusMongoDB.Application.Contracts.Responses
             RegistrationDate = project.RegistrationDate;
             Employees = employeeList.Select(x => (EmployeeResponse)x);
             Level = project.Level;
+            MaxHistoryRangeDays = project.MaxHistoryRangeDays;
         }
 
         public string Id { get; set; }
@@ -34,5 +35,8 @@ namespace LimpidusMongoDB.Application.Contracts.Responses
         public DateTime RegistrationDate { get; set; }
         public IEnumerable<EmployeeResponse> Employees { get; set; }
         public int Level { get; set; }
+
+        /// <summary>Override de range de histórico para cliente (null = default 90 dias).</summary>
+        public int? MaxHistoryRangeDays { get; set; }
     }
 }
