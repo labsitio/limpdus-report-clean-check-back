@@ -2,9 +2,11 @@ using LimpidusMongoDB.Application.Auth;
 using LimpidusMongoDB.Application.Contracts;
 using LimpidusMongoDB.Application.Contracts.Requests;
 using LimpidusMongoDB.Application.Contracts.Responses;
+using LimpidusMongoDB.Application.Data.Entities;
 using LimpidusMongoDB.Application.Data.Repositories.Interfaces;
 using LimpidusMongoDB.Application.Helpers;
 using LimpidusMongoDB.Application.Services.Interfaces;
+using MongoDB.Driver;
 
 namespace LimpidusMongoDB.Application.Services
 {
@@ -120,6 +122,11 @@ namespace LimpidusMongoDB.Application.Services
                     : projects.Select(p => p.Id).ToArray()
             });
 
+            // Admin: sem teto. Franqueado/Consultor: 1 ano.
+            int? maxHistoryRangeDays = isAdmin
+                ? null
+                : HistoryRangeLimits.FranqueadoMaxDays;
+
             return Result.Ok(data: new LoginResponse
             {
                 Token = token,
@@ -130,7 +137,8 @@ namespace LimpidusMongoDB.Application.Services
                 IdProjeto = primary?.Id ?? 0,
                 Nome = primary?.Name ?? franqueado.Nome,
                 AllowedProjects = projects,
-                ExpiresAtUtc = expires
+                ExpiresAtUtc = expires,
+                MaxHistoryRangeDays = maxHistoryRangeDays
             });
         }
 
@@ -214,6 +222,11 @@ namespace LimpidusMongoDB.Application.Services
                 AllowedProjectIds = new[] { project.WorkHeaderId }
             });
 
+            var mongoProject = await _projectRepository.FindOneAsync(
+                Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, project.WorkHeaderId),
+                cancellationToken);
+            var maxHistoryRangeDays = HistoryRangeLimits.EffectiveProjectViewerDays(mongoProject?.MaxHistoryRangeDays);
+
             return Result.Ok(data: new LoginResponse
             {
                 Token = token,
@@ -224,7 +237,8 @@ namespace LimpidusMongoDB.Application.Services
                 IdProjeto = project.WorkHeaderId,
                 Nome = project.NomeProjeto,
                 AllowedProjects = allowed,
-                ExpiresAtUtc = expires
+                ExpiresAtUtc = expires,
+                MaxHistoryRangeDays = maxHistoryRangeDays
             });
         }
     }

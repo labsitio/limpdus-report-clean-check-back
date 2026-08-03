@@ -19,6 +19,12 @@ namespace LimpidusMongoDB.Application.Data.Entities
         public DateTime RegistrationDate { get; set; }
         public int Level { get; set; }
 
+        /// <summary>
+        /// Override do range máximo de histórico para ProjectViewer (dias).
+        /// Null = default 90. Não entra no GetUpdateDefinition (atualizado só via API Admin).
+        /// </summary>
+        public int? MaxHistoryRangeDays { get; set; }
+
         public UpdateDefinition<ProjectEntity> GetUpdateDefinition() =>
             Builders<ProjectEntity>.Update
                 .Set(nameof(Name).FirstCharToLowerCase(), Name)

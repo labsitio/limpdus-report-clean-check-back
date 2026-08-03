@@ -2,6 +2,7 @@
 using LimpidusMongoDB.Application.Auth;
 using LimpidusMongoDB.Application.Contracts.Requests;
 using LimpidusMongoDB.Application.Contracts.Responses;
+using LimpidusMongoDB.Application.Helpers;
 using LimpidusMongoDB.Application.Services.Interfaces;
 using HistoryListResponse = LimpidusMongoDB.Application.Services.Interfaces.HistoryListResponse;
 using Microsoft.AspNetCore.Authorization;
@@ -15,11 +16,16 @@ namespace LimpidusMongoDB.Api.Controllers.v1
     {
         private readonly IHistoryService _historyService;
         private readonly IProjectAccessService _projectAccess;
+        private readonly IProjectService _projectService;
 
-        public HistoryController(IHistoryService historyService, IProjectAccessService projectAccess)
+        public HistoryController(
+            IHistoryService historyService,
+            IProjectAccessService projectAccess,
+            IProjectService projectService)
         {
             _historyService = historyService;
             _projectAccess = projectAccess;
+            _projectService = projectService;
         }
 
         /// <summary>
@@ -52,7 +58,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         }
 
         /// <summary>
-        /// GET Buscar historico do projeto (lista audit / relatório web)
+        /// GET Buscar historico do projeto (lista audit / relatorio web)
         /// </summary>
         [HttpGet("legacyProjectId/{legacyId}")]
         [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(IEnumerable<HistoryResponse>))]
@@ -67,7 +73,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
             if (!_projectAccess.CanAccessLegacyProject(User, legacyId))
                 return Forbid();
 
-            var ruleError = ApplyProjectViewerHistoryRules(request);
+            var ruleError = await ApplyHistoryRangeRulesAsync(legacyId, request, cancellationToken);
             if (ruleError != null)
                 return BadRequest(new { success = false, message = ruleError });
 
@@ -104,7 +110,11 @@ namespace LimpidusMongoDB.Api.Controllers.v1
             if (!_projectAccess.CanExport(User))
                 return Forbid();
 
-            // Export é só Franqueado/Consultor/Admin — sem regras de ProjectViewer.
+            // Export: Franqueado/Consultor teto 365; Admin sem limite. Sem regras de status de cliente.
+            var ruleError = await ApplyHistoryRangeRulesAsync(legacyId, request, cancellationToken, forExport: true);
+            if (ruleError != null)
+                return BadRequest(new { success = false, message = ruleError });
+
             var result = await _historyService.GetHistoriesInSpreadsheet(legacyId, request, cancellationToken);
 
             if (!result.Success)
@@ -142,31 +152,51 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         }
 
         /// <summary>
-        /// Cliente (ProjectViewer): só tarefas concluídas e intervalo máximo de 30 dias.
-        /// Franqueado / Consultor / Admin: veem todos os status; sem limite de intervalo aqui.
+        /// Valida intervalo de datas por papel.
+        /// ProjectViewer: so concluidas + override ?? 90 dias.
+        /// Franqueado/Consultor: max. 365 dias (todos os status).
+        /// Admin: sem teto.
         /// </summary>
-        /// <returns>Mensagem de erro se o range for inválido; null se ok.</returns>
-        private string? ApplyProjectViewerHistoryRules(HistoryQueryRequest request)
+        private async Task<string?> ApplyHistoryRangeRulesAsync(
+            int legacyId,
+            HistoryQueryRequest request,
+            CancellationToken cancellationToken,
+            bool forExport = false)
         {
-            if (!_projectAccess.IsProjectViewer(User))
+            if (_projectAccess.IsAdmin(User))
                 return null;
 
-            request.Status = true;
-
-            if (request.DateStart.HasValue && request.DateEnd.HasValue)
+            if (_projectAccess.IsProjectViewer(User))
             {
-                var start = request.DateStart.Value.Date;
-                var end = request.DateEnd.Value.Date;
-                if (end < start)
-                    return "A data final deve ser maior ou igual à data inicial.";
+                if (forExport)
+                    return "Cliente nao pode exportar historico.";
 
-                if ((end - start).TotalDays > ProjectViewerMaxRangeDays)
-                    return $"O intervalo máximo permitido para cliente é de {ProjectViewerMaxRangeDays} dias.";
+                request.Status = true;
+                var maxDays = await _projectService.GetEffectiveProjectViewerMaxDaysAsync(legacyId, cancellationToken);
+                return ValidateDateRange(request, maxDays, "cliente");
             }
+
+            // Franqueado e Consultor (IsFranqueado cobre ambos)
+            if (_projectAccess.IsFranqueado(User) || _projectAccess.IsConsultor(User))
+                return ValidateDateRange(request, HistoryRangeLimits.FranqueadoMaxDays, "franqueado/consultor");
 
             return null;
         }
 
-        private const int ProjectViewerMaxRangeDays = 30;
+        private static string? ValidateDateRange(HistoryQueryRequest request, int maxDays, string audienceLabel)
+        {
+            if (!request.DateStart.HasValue || !request.DateEnd.HasValue)
+                return null;
+
+            var start = request.DateStart.Value.Date;
+            var end = request.DateEnd.Value.Date;
+            if (end < start)
+                return "A data final deve ser maior ou igual a data inicial.";
+
+            if ((end - start).TotalDays > maxDays)
+                return $"O intervalo maximo permitido para {audienceLabel} e de {maxDays} dias.";
+
+            return null;
+        }
     }
 }
