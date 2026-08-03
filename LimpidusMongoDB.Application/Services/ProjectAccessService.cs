@@ -36,7 +36,7 @@ namespace LimpidusMongoDB.Application.Services
         public bool CanSeeSensitiveHistory(ClaimsPrincipal user) => CanExport(user);
 
         /// <summary>
-        /// Franqueado ou Consultor (login FRANQ_LOGIN com relatório completo).
+        /// Franqueado ou Consultor (login FRANQ_LOGIN com relatório completo: todos os status).
         /// </summary>
         public bool IsFranqueado(ClaimsPrincipal user)
         {
