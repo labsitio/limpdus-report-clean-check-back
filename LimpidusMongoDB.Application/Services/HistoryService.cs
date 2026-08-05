@@ -17,12 +17,18 @@ namespace LimpidusMongoDB.Application.Services
         private static readonly CultureInfo PtBrCulture = new("pt-BR");
 
         private readonly IHistoryRepository _historyRepository;
+        private readonly IProjectRepository _projectRepository;
         private readonly IEmployeeService _employeeService;
         private readonly ISpreadsheetService _spreadsheetService;
 
-        public HistoryService(IHistoryRepository historyRepository, IEmployeeService employeeService, ISpreadsheetService spreadsheetService)
+        public HistoryService(
+            IHistoryRepository historyRepository,
+            IProjectRepository projectRepository,
+            IEmployeeService employeeService,
+            ISpreadsheetService spreadsheetService)
         {
             _historyRepository = historyRepository;
+            _projectRepository = projectRepository;
             _employeeService = employeeService;
             _spreadsheetService = spreadsheetService;
         }
@@ -72,6 +78,12 @@ namespace LimpidusMongoDB.Application.Services
 
                 var responseList = histories.Select(x => new HistoryResponse(x)).ToList();
 
+                // N2/N3: detalhe de atividades no painel Detalhes do relatório web. N1: payload sem Items.
+                var project = await _projectRepository.FindOneAsync(
+                    Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, legacyProjectId),
+                    cancellationToken);
+                var includeActivityDetails = project != null && project.Level >= 2;
+
                 var results = responseList.Select(x => new HistoryAuditResponse()
                 {
                     Id = x.Id,
@@ -81,7 +93,13 @@ namespace LimpidusMongoDB.Application.Services
                     DateEnd = x.CreatedDate,
                     DateStart = x.EndDate,
                     Justification = x.Justification != null ? new JustificationResponse(x.Justification?.Information, x.Justification?.Reason) : null,
-                    Status = x.Justification?.Information == null
+                    Status = x.Justification?.Information == null,
+                    Items = includeActivityDetails
+                        ? (x.Items ?? Enumerable.Empty<HistoryItemResponse>())
+                            .OrderBy(i => i.OrderBy ?? short.MaxValue)
+                            .ThenBy(i => i.Name)
+                            .ToList()
+                        : null
                 }).ToList();
 
                 return Result.Ok(data: new HistoryListResponse

@@ -136,6 +136,7 @@ namespace LimpidusMongoDB.Application.Services
                 FranqId = franqueado.Id,
                 IdProjeto = primary?.Id ?? 0,
                 Nome = primary?.Name ?? franqueado.Nome,
+                Level = primary?.Level ?? 0,
                 AllowedProjects = projects,
                 ExpiresAtUtc = expires,
                 MaxHistoryRangeDays = maxHistoryRangeDays
@@ -157,7 +158,8 @@ namespace LimpidusMongoDB.Application.Services
                     .Select(p => new AllowedProjectResponse
                     {
                         Id = p.LegacyId,
-                        Name = p.Name ?? string.Empty
+                        Name = p.Name ?? string.Empty,
+                        Level = p.Level
                     })
                     .ToList();
             }
@@ -179,9 +181,16 @@ namespace LimpidusMongoDB.Application.Services
             if (mongoProjects == null || !mongoProjects.Any())
                 return sqlProjects;
 
-            var mongoIds = mongoProjects.Select(p => p.LegacyId).ToHashSet();
+            var mongoById = mongoProjects.ToDictionary(p => p.LegacyId);
             return sqlProjects
-                .Where(p => mongoIds.Contains(p.Id))
+                .Where(p => mongoById.ContainsKey(p.Id))
+                .Select(p => new AllowedProjectResponse
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    // Preferência Mongo (fonte do Clean Check); SQL já traz NIVEL_PROJETO como fallback.
+                    Level = mongoById[p.Id].Level != 0 ? mongoById[p.Id].Level : p.Level
+                })
                 .OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
@@ -207,9 +216,19 @@ namespace LimpidusMongoDB.Application.Services
             if (project == null)
                 return Result.Error("Usuário ou senha inválidos.");
 
+            var mongoProject = await _projectRepository.FindOneAsync(
+                Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, project.WorkHeaderId),
+                cancellationToken);
+            var level = mongoProject?.Level ?? project.NivelProjeto;
+
             var allowed = new[]
             {
-                new AllowedProjectResponse { Id = project.WorkHeaderId, Name = project.NomeProjeto }
+                new AllowedProjectResponse
+                {
+                    Id = project.WorkHeaderId,
+                    Name = project.NomeProjeto,
+                    Level = level
+                }
             };
 
             var (token, expires) = _jwtTokenService.CreateToken(new AuthTokenPayload
@@ -222,9 +241,6 @@ namespace LimpidusMongoDB.Application.Services
                 AllowedProjectIds = new[] { project.WorkHeaderId }
             });
 
-            var mongoProject = await _projectRepository.FindOneAsync(
-                Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, project.WorkHeaderId),
-                cancellationToken);
             var maxHistoryRangeDays = HistoryRangeLimits.EffectiveProjectViewerDays(mongoProject?.MaxHistoryRangeDays);
 
             return Result.Ok(data: new LoginResponse
@@ -236,6 +252,7 @@ namespace LimpidusMongoDB.Application.Services
                 FranqId = null,
                 IdProjeto = project.WorkHeaderId,
                 Nome = project.NomeProjeto,
+                Level = level,
                 AllowedProjects = allowed,
                 ExpiresAtUtc = expires,
                 MaxHistoryRangeDays = maxHistoryRangeDays

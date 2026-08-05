@@ -14,6 +14,7 @@ namespace LimpidusMongoDB.Application.Services.Interfaces
         public int WorkHeaderId { get; set; }
         public string NomeProjeto { get; set; } = string.Empty;
         public string Login { get; set; } = string.Empty;
+        public int NivelProjeto { get; set; }
     }
 
     public class FranqueadoUserEntity
