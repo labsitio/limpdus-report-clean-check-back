@@ -23,6 +23,13 @@ namespace LimpidusMongoDB.Application.Services.Interfaces
         public string Nome { get; set; } = string.Empty;
         public string Login { get; set; } = string.Empty;
         public bool IsAdmin { get; set; }
+        /// <summary>True se o nó em TBL_NIVEIS_GRUPO tem filhos (carteira de consultor).</summary>
+        public bool HasChildren { get; set; }
+        public int? NivelId { get; set; }
+        public string NivelNome { get; set; } = string.Empty;
+        public int? NivelGrupoId { get; set; }
+        /// <summary>Nomes de TBL_GRUPOS vinculados (ex.: Administradores, Consultores).</summary>
+        public string Grupos { get; set; } = string.Empty;
     }
 
     /// <summary>

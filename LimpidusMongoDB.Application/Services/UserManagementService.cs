@@ -20,14 +20,7 @@ namespace LimpidusMongoDB.Application.Services
             try
             {
                 var users = await _sqlAuth.ListFranqueadosAsync(cancellationToken);
-                var data = users.Select(u => new FranqueadoUserResponse
-                {
-                    Id = u.Id,
-                    Nome = u.Nome,
-                    Login = u.Login,
-                    IsAdmin = u.IsAdmin,
-                    IsFranqueado = true
-                }).ToList();
+                var data = users.Select(MapUser).ToList();
 
                 return Result.Ok(data: data);
             }
@@ -57,12 +50,24 @@ namespace LimpidusMongoDB.Application.Services
 
                 await _sqlAuth.SetAdminAsync(franqId, isAdmin, cancellationToken);
 
-                var updated = new FranqueadoUserResponse
+                // Recarrega o usuário para devolver grupo/nível atualizados.
+                var all = await _sqlAuth.ListFranqueadosAsync(cancellationToken);
+                var refreshed = all.FirstOrDefault(u => u.Id == franqId);
+                var updated = refreshed != null
+                    ? MapUser(refreshed)
+                    : new FranqueadoUserResponse
+                    {
+                        Id = franqId,
+                        IsAdmin = isAdmin,
+                        IsFranqueado = true,
+                        Role = isAdmin ? AuthRoles.Admin : AuthRoles.Franqueado
+                    };
+
+                if (refreshed == null)
                 {
-                    Id = franqId,
-                    IsAdmin = isAdmin,
-                    IsFranqueado = true
-                };
+                    updated.IsAdmin = isAdmin;
+                    updated.Role = isAdmin ? AuthRoles.Admin : AuthRoles.Franqueado;
+                }
 
                 return Result.Ok(
                     message: isAdmin
@@ -78,6 +83,31 @@ namespace LimpidusMongoDB.Application.Services
             {
                 return Result.Error("Falha ao atualizar permissão Admin.");
             }
+        }
+
+        private static FranqueadoUserResponse MapUser(FranqueadoUserEntity u)
+        {
+            var isConsultor = !u.IsAdmin && u.HasChildren;
+            var role = u.IsAdmin
+                ? AuthRoles.Admin
+                : isConsultor
+                    ? AuthRoles.Consultor
+                    : AuthRoles.Franqueado;
+
+            return new FranqueadoUserResponse
+            {
+                Id = u.Id,
+                Nome = u.Nome,
+                Login = u.Login,
+                IsAdmin = u.IsAdmin,
+                IsFranqueado = true,
+                IsConsultor = isConsultor,
+                Role = role,
+                NivelId = u.NivelId,
+                NivelNome = u.NivelNome,
+                NivelGrupoId = u.NivelGrupoId,
+                Grupos = u.Grupos
+            };
         }
 
         private static int? GetFranqId(ClaimsPrincipal user)
