@@ -12,5 +12,9 @@ namespace LimpidusMongoDB.Application.Contracts.Responses
         public bool Status { get; set; }
         public JustificationResponse? Justification { get; set; }
 
+        /// <summary>
+        /// Atividades da execução. Preenchido apenas para Clean Check N2/N3 (Level &gt;= 2); null em N1.
+        /// </summary>
+        public IList<HistoryItemResponse>? Items { get; set; }
     }
 }

@@ -22,11 +22,11 @@ namespace LimpidusMongoDB.Application.Services
             WHERE ID_TBLGRUPOS = 1 AND ID_FRANQ = @franqId";
 
         private const string QueryFranqueadoProjects = @"
-            SELECT WORK_HEADER_ID AS Id, NOMEPROJETO AS Name
+            SELECT WORK_HEADER_ID AS Id, NOMEPROJETO AS Name, ISNULL(NIVEL_PROJETO, 0) AS Level
             FROM WORK_HEADER WITH(NOLOCK)
             WHERE ID_DONO = @franqId
             UNION
-            SELECT wh.WORK_HEADER_ID AS Id, wh.NOMEPROJETO AS Name
+            SELECT wh.WORK_HEADER_ID AS Id, wh.NOMEPROJETO AS Name, ISNULL(wh.NIVEL_PROJETO, 0) AS Level
             FROM WORK_HEADER_SHARE sh WITH(NOLOCK)
             INNER JOIN WORK_HEADER wh WITH(NOLOCK) ON wh.WORK_HEADER_ID = sh.WORK_HEADER_ID
             WHERE sh.FRANQ_LOGIN = @franqId
@@ -95,11 +95,11 @@ namespace LimpidusMongoDB.Application.Services
                 UNION
                 SELECT @franqId
             )
-            SELECT DISTINCT wh.WORK_HEADER_ID AS Id, wh.NOMEPROJETO AS Name
+            SELECT DISTINCT wh.WORK_HEADER_ID AS Id, wh.NOMEPROJETO AS Name, ISNULL(wh.NIVEL_PROJETO, 0) AS Level
             FROM WORK_HEADER wh WITH(NOLOCK)
             INNER JOIN Owners o ON wh.ID_DONO = o.OwnerId
             UNION
-            SELECT wh.WORK_HEADER_ID AS Id, wh.NOMEPROJETO AS Name
+            SELECT wh.WORK_HEADER_ID AS Id, wh.NOMEPROJETO AS Name, ISNULL(wh.NIVEL_PROJETO, 0) AS Level
             FROM WORK_HEADER_SHARE sh WITH(NOLOCK)
             INNER JOIN WORK_HEADER wh WITH(NOLOCK) ON wh.WORK_HEADER_ID = sh.WORK_HEADER_ID
             WHERE sh.FRANQ_LOGIN = @franqId
@@ -110,14 +110,14 @@ namespace LimpidusMongoDB.Application.Services
         /// Todos os projetos (Admin). Preferência de ordenação: N3 (NIVEL_PROJETO=3), depois nome.
         /// </summary>
         private const string QueryAllProjects = @"
-            SELECT WORK_HEADER_ID AS Id, NOMEPROJETO AS Name
+            SELECT WORK_HEADER_ID AS Id, NOMEPROJETO AS Name, ISNULL(NIVEL_PROJETO, 0) AS Level
             FROM WORK_HEADER WITH(NOLOCK)
             ORDER BY
                 CASE WHEN ISNULL(NIVEL_PROJETO, 0) = 3 THEN 0 ELSE 1 END,
                 NOMEPROJETO";
 
         private const string QueryProjectLogin = @"
-            SELECT TOP 1 WORK_HEADER_ID, NOMEPROJETO, LOGIN
+            SELECT TOP 1 WORK_HEADER_ID, NOMEPROJETO, LOGIN, ISNULL(NIVEL_PROJETO, 0) AS NIVEL_PROJETO
             FROM WORK_HEADER WITH(NOLOCK)
             WHERE LOGIN = @login AND SENHA = @senha";
 
@@ -258,10 +258,12 @@ namespace LimpidusMongoDB.Application.Services
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
+                var levelOrdinal = reader.GetOrdinal("Level");
                 projects.Add(new AllowedProjectResponse
                 {
                     Id = Convert.ToInt32(reader["Id"]),
-                    Name = reader["Name"]?.ToString() ?? string.Empty
+                    Name = reader["Name"]?.ToString() ?? string.Empty,
+                    Level = reader.IsDBNull(levelOrdinal) ? 0 : Convert.ToInt32(reader.GetValue(levelOrdinal))
                 });
             }
 
@@ -287,7 +289,8 @@ namespace LimpidusMongoDB.Application.Services
             {
                 WorkHeaderId = reader.GetInt32(reader.GetOrdinal("WORK_HEADER_ID")),
                 NomeProjeto = reader["NOMEPROJETO"]?.ToString() ?? string.Empty,
-                Login = reader["LOGIN"]?.ToString() ?? string.Empty
+                Login = reader["LOGIN"]?.ToString() ?? string.Empty,
+                NivelProjeto = Convert.ToInt32(reader["NIVEL_PROJETO"])
             };
         }
 
