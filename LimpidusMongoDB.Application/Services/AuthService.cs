@@ -6,6 +6,8 @@ using LimpidusMongoDB.Application.Data.Entities;
 using LimpidusMongoDB.Application.Data.Repositories.Interfaces;
 using LimpidusMongoDB.Application.Helpers;
 using LimpidusMongoDB.Application.Services.Interfaces;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
 namespace LimpidusMongoDB.Application.Services
@@ -15,45 +17,76 @@ namespace LimpidusMongoDB.Application.Services
         private readonly ISqlAuthDataAccess _sqlAuth;
         private readonly IJwtTokenService _jwtTokenService;
         private readonly IProjectRepository _projectRepository;
+        private readonly ILogger<AuthService> _logger;
 
         public AuthService(
             ISqlAuthDataAccess sqlAuth,
             IJwtTokenService jwtTokenService,
-            IProjectRepository projectRepository)
+            IProjectRepository projectRepository,
+            ILogger<AuthService> logger)
         {
             _sqlAuth = sqlAuth;
             _jwtTokenService = jwtTokenService;
             _projectRepository = projectRepository;
+            _logger = logger;
         }
 
         public async Task<Result> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
         {
             if (request == null || string.IsNullOrWhiteSpace(request.Login) || string.IsNullOrWhiteSpace(request.Password))
-                return Result.Error("Login e senha são obrigatórios.");
+                return Result.Error(AuthErrorMessages.InvalidRequest, AuthErrorCodes.InvalidRequest);
 
             var type = (request.Type ?? AuthLoginTypes.Auto).Trim().ToLowerInvariant();
             if (string.IsNullOrEmpty(type))
                 type = AuthLoginTypes.Auto;
 
+            var login = request.Login.Trim();
+
             try
             {
                 return type switch
                 {
-                    AuthLoginTypes.Auto => await LoginAutoAsync(request.Login.Trim(), request.Password, cancellationToken),
-                    AuthLoginTypes.Franqueado => await LoginFranqueadoAsync(request.Login.Trim(), request.Password, cancellationToken),
-                    AuthLoginTypes.Project => await LoginProjectAsync(request.Login.Trim(), request.Password, cancellationToken),
-                    _ => Result.Error("Tipo de login invalido. Use auto, franqueado ou project.")
+                    AuthLoginTypes.Auto => await LoginAutoAsync(login, request.Password, cancellationToken),
+                    AuthLoginTypes.Franqueado => await LoginFranqueadoAsync(login, request.Password, cancellationToken),
+                    AuthLoginTypes.Project => await LoginProjectAsync(login, request.Password, cancellationToken),
+                    _ => Result.Error(AuthErrorMessages.InvalidLoginType, AuthErrorCodes.InvalidRequest)
                 };
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            // Configuração ausente (ex.: ConnectionStrings:SqlServerDB) — detalhe fica só no log.
             catch (InvalidOperationException ex)
             {
-                return Result.Error(ex.Message);
+                _logger.LogError(ex, "Login '{Login}': configuração de autenticação inválida.", login);
+                return Result.Error(AuthErrorMessages.ServiceUnavailable, AuthErrorCodes.ServiceUnavailable);
             }
-            catch (Exception)
+            catch (Exception ex) when (IsInfrastructureFailure(ex))
             {
-                return Result.Error("Falha ao autenticar. Verifique a conexão SQL / configuração.");
+                _logger.LogError(ex, "Login '{Login}': falha de infraestrutura (SQL/Mongo).", login);
+                return Result.Error(AuthErrorMessages.ServiceUnavailable, AuthErrorCodes.ServiceUnavailable);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Login '{Login}': falha inesperada.", login);
+                return Result.Error(AuthErrorMessages.Unexpected, AuthErrorCodes.Unexpected);
             }
         }
+
+        /// <summary>
+        /// Falhas de dependência externa (banco indisponível, timeout, rede) viram 503;
+        /// qualquer outra coisa é bug nosso e vira 500.
+        /// </summary>
+        private static bool IsInfrastructureFailure(Exception ex) => ex switch
+        {
+            SqlException => true,
+            TimeoutException => true,
+            MongoException => true,
+            System.Net.Sockets.SocketException => true,
+            System.Data.Common.DbException => true,
+            _ => false
+        };
 
 
         private async Task<Result> LoginAutoAsync(string login, string password, CancellationToken cancellationToken)
@@ -70,7 +103,7 @@ namespace LimpidusMongoDB.Application.Services
             var hash = Md5Hasher.HashHex(password);
             var franqueado = await _sqlAuth.ValidateFranqueadoAsync(login, hash, cancellationToken);
             if (franqueado == null)
-                return Result.Error("Usuário ou senha inválidos.");
+                return Result.Error(AuthErrorMessages.InvalidCredentials, AuthErrorCodes.InvalidCredentials);
 
             var isAdmin = await _sqlAuth.IsAdminAsync(franqueado.Id, cancellationToken);
 
@@ -152,15 +185,15 @@ namespace LimpidusMongoDB.Application.Services
             var mongoProjects = await _projectRepository.FindAllAsync();
             if (mongoProjects != null && mongoProjects.Any())
             {
-                return mongoProjects
-                    .OrderBy(p => p.Level == 3 ? 0 : 1)
-                    .ThenBy(p => p.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                return DeduplicateByLegacyId(mongoProjects)
                     .Select(p => new AllowedProjectResponse
                     {
                         Id = p.LegacyId,
                         Name = p.Name ?? string.Empty,
                         Level = p.Level
                     })
+                    .OrderBy(p => p.Level == 3 ? 0 : 1)
+                    .ThenBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
                     .ToList();
             }
 
@@ -181,7 +214,7 @@ namespace LimpidusMongoDB.Application.Services
             if (mongoProjects == null || !mongoProjects.Any())
                 return sqlProjects;
 
-            var mongoById = mongoProjects.ToDictionary(p => p.LegacyId);
+            var mongoById = DeduplicateByLegacyId(mongoProjects).ToDictionary(p => p.LegacyId);
             return sqlProjects
                 .Where(p => mongoById.ContainsKey(p.Id))
                 .Select(p => new AllowedProjectResponse
@@ -191,9 +224,24 @@ namespace LimpidusMongoDB.Application.Services
                     // Preferência Mongo (fonte do Clean Check); SQL já traz NIVEL_PROJETO como fallback.
                     Level = mongoById[p.Id].Level != 0 ? mongoById[p.Id].Level : p.Level
                 })
+                .GroupBy(p => p.Id)
+                .Select(g => g.First())
                 .OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
+
+        /// <summary>
+        /// O Mongo tem projetos distintos compartilhando o mesmo LegacyId (ex.: backups e
+        /// versões N2/N3 do mesmo WORK_HEADER_ID). Mantém um por LegacyId, preferindo o de
+        /// maior nível — indexar direto por LegacyId quebraria com chave duplicada.
+        /// </summary>
+        private static IEnumerable<ProjectEntity> DeduplicateByLegacyId(IEnumerable<ProjectEntity> projects) =>
+            projects
+                .GroupBy(p => p.LegacyId)
+                .Select(g => g
+                    .OrderByDescending(p => p.Level)
+                    .ThenBy(p => p.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                    .First());
 
         /// <summary>
         /// Preferência: projeto N3 explícito no nome (ex. Cardoso CC N3), senão o primeiro da lista
@@ -214,7 +262,7 @@ namespace LimpidusMongoDB.Application.Services
         {
             var project = await _sqlAuth.ValidateProjectLoginAsync(login, password, cancellationToken);
             if (project == null)
-                return Result.Error("Usuário ou senha inválidos.");
+                return Result.Error(AuthErrorMessages.InvalidCredentials, AuthErrorCodes.InvalidCredentials);
 
             var mongoProject = await _projectRepository.FindOneAsync(
                 Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, project.WorkHeaderId),

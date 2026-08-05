@@ -1,4 +1,5 @@
 using System.Net;
+using LimpidusMongoDB.Application.Auth;
 using LimpidusMongoDB.Application.Contracts.Requests;
 using LimpidusMongoDB.Application.Contracts.Responses;
 using LimpidusMongoDB.Application.Services.Interfaces;
@@ -23,13 +24,25 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(LoginResponse))]
         [SwaggerResponse((int)HttpStatusCode.BadRequest)]
         [SwaggerResponse((int)HttpStatusCode.Unauthorized)]
+        [SwaggerResponse((int)HttpStatusCode.InternalServerError)]
+        [SwaggerResponse((int)HttpStatusCode.ServiceUnavailable)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
         {
             var result = await _authService.LoginAsync(request, cancellationToken);
-            if (!result.Success)
-                return Unauthorized(result);
+            if (result.Success)
+                return Ok(result);
 
-            return Ok(result);
+            // Só credencial inválida é 401; indisponibilidade de SQL/Mongo não pode
+            // se passar por erro de senha.
+            var status = result.Code switch
+            {
+                AuthErrorCodes.InvalidRequest => HttpStatusCode.BadRequest,
+                AuthErrorCodes.ServiceUnavailable => HttpStatusCode.ServiceUnavailable,
+                AuthErrorCodes.Unexpected => HttpStatusCode.InternalServerError,
+                _ => HttpStatusCode.Unauthorized
+            };
+
+            return StatusCode((int)status, result);
         }
 
         /// <summary>
