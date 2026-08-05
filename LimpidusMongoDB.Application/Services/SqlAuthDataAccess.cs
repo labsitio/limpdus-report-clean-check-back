@@ -122,11 +122,30 @@ namespace LimpidusMongoDB.Application.Services
             WHERE LOGIN = @login AND SENHA = @senha";
 
         private const string QueryListFranqueados = @"
-            SELECT f.ID, f.NOME, f.LOGIN,
-                   CASE WHEN g.ID_FRANQ IS NOT NULL THEN 1 ELSE 0 END AS IsAdmin
+            SELECT
+                f.ID,
+                f.NOME,
+                f.LOGIN,
+                CASE WHEN gAdmin.ID_FRANQ IS NOT NULL THEN 1 ELSE 0 END AS IsAdmin,
+                CASE WHEN EXISTS (
+                    SELECT 1
+                    FROM TBL_NIVEIS_GRUPO c WITH(NOLOCK)
+                    WHERE c.FATHER_ID = f.TBL_NIVEIS_GRUPO_ID
+                ) THEN 1 ELSE 0 END AS HasChildren,
+                f.TBL_NIVEIS_ID AS NivelId,
+                ISNULL(n.TBL_NIVEIS_NOME, N'') AS NivelNome,
+                f.TBL_NIVEIS_GRUPO_ID AS NivelGrupoId,
+                ISNULL((
+                    SELECT STRING_AGG(tg.NOME, N', ') WITHIN GROUP (ORDER BY tg.NOME)
+                    FROM GRUPOS_USER gu WITH(NOLOCK)
+                    INNER JOIN TBL_GRUPOS tg WITH(NOLOCK) ON tg.ID = gu.ID_TBLGRUPOS
+                    WHERE gu.ID_FRANQ = f.ID
+                ), N'') AS Grupos
             FROM FRANQ_LOGIN f WITH(NOLOCK)
-            LEFT JOIN GRUPOS_USER g WITH(NOLOCK)
-                ON g.ID_FRANQ = f.ID AND g.ID_TBLGRUPOS = 1
+            LEFT JOIN GRUPOS_USER gAdmin WITH(NOLOCK)
+                ON gAdmin.ID_FRANQ = f.ID AND gAdmin.ID_TBLGRUPOS = 1
+            LEFT JOIN TBL_NIVEIS n WITH(NOLOCK)
+                ON n.TBL_NIVEIS_ID = f.TBL_NIVEIS_ID
             WHERE f.ATIVO = 1
             ORDER BY f.NOME";
 
@@ -307,12 +326,24 @@ namespace LimpidusMongoDB.Application.Services
             await using var reader = await command.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
+                int? nivelId = reader["NivelId"] == DBNull.Value
+                    ? null
+                    : Convert.ToInt32(reader["NivelId"]);
+                int? nivelGrupoId = reader["NivelGrupoId"] == DBNull.Value
+                    ? null
+                    : Convert.ToInt32(reader["NivelGrupoId"]);
+
                 users.Add(new FranqueadoUserEntity
                 {
                     Id = reader.GetInt32(reader.GetOrdinal("ID")),
                     Nome = reader["NOME"]?.ToString() ?? string.Empty,
                     Login = reader["LOGIN"]?.ToString() ?? string.Empty,
-                    IsAdmin = Convert.ToInt32(reader["IsAdmin"]) == 1
+                    IsAdmin = Convert.ToInt32(reader["IsAdmin"]) == 1,
+                    HasChildren = Convert.ToInt32(reader["HasChildren"]) == 1,
+                    NivelId = nivelId,
+                    NivelNome = reader["NivelNome"]?.ToString() ?? string.Empty,
+                    NivelGrupoId = nivelGrupoId,
+                    Grupos = reader["Grupos"]?.ToString() ?? string.Empty
                 });
             }
 
