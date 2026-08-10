@@ -32,7 +32,7 @@ namespace LimpidusMongoDB.Application.Services
 
                 var projectResponseList = new List<ProjectResponse>();
 
-                foreach (var project in projects)
+                foreach (var project in ProjectLegacyResolver.DeduplicateByLegacyId(projects))
                     projectResponseList.Add(await GetProjectDetail(project));
 
                 return Result.Ok(data: projectResponseList);
@@ -47,7 +47,9 @@ namespace LimpidusMongoDB.Application.Services
         {
             try
             {
-                var project = await _projectRepository.FindOneAsync(Builders<ProjectEntity>.Filter.Eq("legacyId", legacyId));
+                var projects = await _projectRepository.FindAsync(
+                    Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, legacyId));
+                var project = ProjectLegacyResolver.PreferCanonical(projects);
                 if (project == null)
                     return Result.Error(ProjectErrors.Project_Error_NotFound.Description());
 
@@ -122,9 +124,10 @@ namespace LimpidusMongoDB.Application.Services
 
         public async Task<int?> GetMaxHistoryRangeDaysAsync(int legacyId, CancellationToken cancellationToken = default)
         {
-            var project = await _projectRepository.FindOneAsync(
+            var projects = await _projectRepository.FindAsync(
                 Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, legacyId),
                 cancellationToken);
+            var project = ProjectLegacyResolver.PreferCanonical(projects);
             return project?.MaxHistoryRangeDays;
         }
 
@@ -144,15 +147,17 @@ namespace LimpidusMongoDB.Application.Services
                 if (maxHistoryRangeDays is <= 0)
                     return Result.Error("maxHistoryRangeDays deve ser um inteiro positivo, ou null para o default.");
 
-                var filter = Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, legacyId);
-                var project = await _projectRepository.FindOneAsync(filter, cancellationToken);
+                var projects = await _projectRepository.FindAsync(
+                    Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, legacyId),
+                    cancellationToken);
+                var project = ProjectLegacyResolver.PreferCanonical(projects);
                 if (project == null)
                     return Result.Error(ProjectErrors.Project_Error_NotFound.Description());
 
                 var update = BaseEntity.UpdateDateDefinition(
                     Builders<ProjectEntity>.Update.Set(x => x.MaxHistoryRangeDays, maxHistoryRangeDays));
 
-                await _projectRepository.UpdateOneAsync(filter, update, cancellationToken);
+                await _projectRepository.UpdateOneAsync(project.Id.ToString(), update, cancellationToken);
                 return Result.Ok(data: new HistoryRangeResponse
                 {
                     LegacyId = legacyId,

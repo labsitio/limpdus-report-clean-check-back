@@ -39,7 +39,8 @@ namespace LimpidusMongoDB.Application.Services
             {
                 var mongoFilter = Builders<HistoryEntity>.Filter;
                 var filter = mongoFilter.Eq(x => x.ProjectId, legacyProjectId) & mongoFilter.Eq(x => x.EmployeeId, employeeId);
-                var histories = await _historyRepository.FindAsync(filter, cancellationToken);
+                var histories = HistoryDeduper.Deduplicate(
+                    await _historyRepository.FindAsync(filter, cancellationToken));
 
                 var responseList = histories.Select(x => new HistoryResponse(x));
 
@@ -74,14 +75,19 @@ namespace LimpidusMongoDB.Application.Services
                 & (!query.Status.HasValue ? mongoFilter.Empty :
                     (query.Status.Value ? mongoFilter.Where(y => y.Justification.Information == null) : mongoFilter.Where(y => y.Justification.Information != null)));
 
-                var histories = await _historyRepository.FindAsync(filter, cancellationToken);
+                // History.ProjectId é o LegacyId (int), não ObjectId — sem join em Project.
+                // Duplicatas na UI vêm de documentos repetidos (double-tap); dedupe na leitura.
+                var histories = HistoryDeduper.Deduplicate(
+                    await _historyRepository.FindAsync(filter, cancellationToken));
 
                 var responseList = histories.Select(x => new HistoryResponse(x)).ToList();
 
                 // N2/N3: detalhe de atividades no painel Detalhes do relatório web. N1: payload sem Items.
-                var project = await _projectRepository.FindOneAsync(
+                // Com LegacyId duplicado (backup N1 + N2/N3), preferir o projeto canónico (maior Level).
+                var projects = await _projectRepository.FindAsync(
                     Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, legacyProjectId),
                     cancellationToken);
+                var project = ProjectLegacyResolver.PreferCanonical(projects);
                 var includeActivityDetails = project != null && project.Level >= 2;
 
                 var results = responseList.Select(x => new HistoryAuditResponse()
@@ -192,7 +198,7 @@ namespace LimpidusMongoDB.Application.Services
                             & Builders<HistoryEntity>.Filter.Lte(x => x.EndDate, request.EndDate.AddSeconds(15));
 
                         var candidates = await _historyRepository.FindAsync(filterDup, cancellationToken);
-                        if (candidates.Any(c => IsDuplicateHistorySubmission(c, request)))
+                        if (candidates.Any(c => HistoryDeduper.IsDuplicateSubmission(c, request)))
                             continue;
                     }
 
@@ -233,46 +239,5 @@ namespace LimpidusMongoDB.Application.Services
                 return Result.Error(ApplicationErrors.Application_Error_General.Description());
             }
         }
-
-        /// <summary>
-        /// Mesma ideia do script <c>scripts/mongo/dedupe-history.mongosh.js</c>: mesmo envio (área, fim, itens, justificativa).
-        /// </summary>
-        private static bool IsDuplicateHistorySubmission(HistoryEntity existing, HistoryRequest incoming)
-        {
-            if (existing.ProjectId != incoming.ProjectId)
-                return false;
-            if (!string.Equals(existing.EmployeeId, incoming.EmployeeId, StringComparison.Ordinal))
-                return false;
-            if (!string.Equals(existing.AreaTaskId, incoming.AreaTaskId, StringComparison.Ordinal))
-                return false;
-            if (Math.Abs((existing.EndDate - incoming.EndDate).TotalSeconds) > 5)
-                return false;
-            if (!string.Equals(NormalizeJustification(existing.Justification), NormalizeJustification(incoming.Justification), StringComparison.Ordinal))
-                return false;
-            return string.Equals(
-                ItemsFingerprintFromEntity(existing.Items),
-                ItemsFingerprintFromRequest(incoming.Items),
-                StringComparison.Ordinal);
-        }
-
-        private static string NormalizeJustification(HistoryJustificationEntity? j) =>
-            j == null ? "\u001f" : $"{j.Information ?? string.Empty}\u001f{j.Reason ?? string.Empty}";
-
-        private static string NormalizeJustification(JustificationRequest? j) =>
-            j == null ? "\u001f" : $"{j.Information ?? string.Empty}\u001f{j.Reason ?? string.Empty}";
-
-        private static string ItemsFingerprintFromEntity(IEnumerable<HistoryItemEntity>? items) =>
-            string.Join(
-                "|",
-                (items ?? Enumerable.Empty<HistoryItemEntity>())
-                    .Select(x => $"{x.Id}\u001f{x.Performed}\u001f{x.OrderBy?.ToString() ?? string.Empty}")
-                    .OrderBy(x => x, StringComparer.Ordinal));
-
-        private static string ItemsFingerprintFromRequest(IEnumerable<HistoryItemRequest>? items) =>
-            string.Join(
-                "|",
-                (items ?? Enumerable.Empty<HistoryItemRequest>())
-                    .Select(x => $"{x.Id}\u001f{x.Performed}\u001f{x.OrderBy?.ToString() ?? string.Empty}")
-                    .OrderBy(x => x, StringComparer.Ordinal));
     }
 }
