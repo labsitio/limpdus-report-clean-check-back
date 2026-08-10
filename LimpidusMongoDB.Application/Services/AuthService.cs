@@ -185,7 +185,7 @@ namespace LimpidusMongoDB.Application.Services
             var mongoProjects = await _projectRepository.FindAllAsync();
             if (mongoProjects != null && mongoProjects.Any())
             {
-                return DeduplicateByLegacyId(mongoProjects)
+                return ProjectLegacyResolver.DeduplicateByLegacyId(mongoProjects)
                     .Select(p => new AllowedProjectResponse
                     {
                         Id = p.LegacyId,
@@ -214,7 +214,7 @@ namespace LimpidusMongoDB.Application.Services
             if (mongoProjects == null || !mongoProjects.Any())
                 return sqlProjects;
 
-            var mongoById = DeduplicateByLegacyId(mongoProjects).ToDictionary(p => p.LegacyId);
+            var mongoById = ProjectLegacyResolver.DeduplicateByLegacyId(mongoProjects).ToDictionary(p => p.LegacyId);
             return sqlProjects
                 .Where(p => mongoById.ContainsKey(p.Id))
                 .Select(p => new AllowedProjectResponse
@@ -229,19 +229,6 @@ namespace LimpidusMongoDB.Application.Services
                 .OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
-
-        /// <summary>
-        /// O Mongo tem projetos distintos compartilhando o mesmo LegacyId (ex.: backups e
-        /// versões N2/N3 do mesmo WORK_HEADER_ID). Mantém um por LegacyId, preferindo o de
-        /// maior nível — indexar direto por LegacyId quebraria com chave duplicada.
-        /// </summary>
-        private static IEnumerable<ProjectEntity> DeduplicateByLegacyId(IEnumerable<ProjectEntity> projects) =>
-            projects
-                .GroupBy(p => p.LegacyId)
-                .Select(g => g
-                    .OrderByDescending(p => p.Level)
-                    .ThenBy(p => p.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase)
-                    .First());
 
         /// <summary>
         /// Preferência: projeto N3 explícito no nome (ex. Cardoso CC N3), senão o primeiro da lista
@@ -264,9 +251,10 @@ namespace LimpidusMongoDB.Application.Services
             if (project == null)
                 return Result.Error(AuthErrorMessages.InvalidCredentials, AuthErrorCodes.InvalidCredentials);
 
-            var mongoProject = await _projectRepository.FindOneAsync(
+            var mongoProjects = await _projectRepository.FindAsync(
                 Builders<ProjectEntity>.Filter.Eq(x => x.LegacyId, project.WorkHeaderId),
                 cancellationToken);
+            var mongoProject = ProjectLegacyResolver.PreferCanonical(mongoProjects);
             var level = mongoProject?.Level ?? project.NivelProjeto;
 
             var allowed = new[]
