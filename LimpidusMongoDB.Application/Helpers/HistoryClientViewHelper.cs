@@ -10,25 +10,18 @@ namespace LimpidusMongoDB.Application.Helpers
     public static class HistoryClientViewHelper
     {
         /// <summary>
-        /// Filtra áreas incompletas e aplica permissões de atividades na lista do relatório.
+        /// Sem permissão: só áreas com atividades e todas realizadas.
+        /// Com <paramref name="showUnperformed"/>: áreas com atividades (inclui não realizadas).
         /// </summary>
         public static void ApplyForProjectViewer(
             HistoryListResponse list,
-            bool showActivities,
-            IReadOnlyCollection<string>? visibleItemIds)
+            bool showUnperformed)
         {
             if (list?.Data == null)
                 return;
 
-            var allowed = visibleItemIds == null
-                ? null
-                : new HashSet<string>(
-                    visibleItemIds.Where(id => !string.IsNullOrWhiteSpace(id)),
-                    StringComparer.OrdinalIgnoreCase);
-
             list.Data = list.Data
-                .Where(IsFullyCompletedForClient)
-                .Select(row => ApplyActivityVisibility(row, showActivities, allowed))
+                .Where(row => IsVisibleToClient(row, showUnperformed))
                 .ToList();
 
             list.Departments = list.Data
@@ -50,42 +43,15 @@ namespace LimpidusMongoDB.Application.Helpers
                 .ToList();
         }
 
-        /// <summary>
-        /// Área só aparece para o cliente se tiver atividades e todas foram realizadas.
-        /// Sem itens (nada para expandir) = não mostra.
-        /// </summary>
-        public static bool IsFullyCompletedForClient(HistoryAuditResponse row)
+        public static bool IsVisibleToClient(HistoryAuditResponse row, bool showUnperformed)
         {
             if (row?.Items == null || row.Items.Count == 0)
                 return false;
 
+            if (showUnperformed)
+                return true;
+
             return row.Items.All(i => i.Performed);
-        }
-
-        private static HistoryAuditResponse ApplyActivityVisibility(
-            HistoryAuditResponse row,
-            bool showActivities,
-            HashSet<string>? allowedIds)
-        {
-            if (!showActivities)
-            {
-                row.Items = null;
-                return row;
-            }
-
-            if (row.Items == null)
-                return row;
-
-            if (allowedIds == null)
-                return row;
-
-            row.Items = row.Items
-                .Where(i =>
-                    (!string.IsNullOrWhiteSpace(i.Id) && allowedIds.Contains(i.Id))
-                    || (!string.IsNullOrWhiteSpace(i.Name) && allowedIds.Contains(i.Name)))
-                .ToList();
-
-            return row;
         }
     }
 }

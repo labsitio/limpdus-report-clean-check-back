@@ -26,16 +26,10 @@ namespace LimpidusMongoDB.Application.Data.Entities
         public int? MaxHistoryRangeDays { get; set; }
 
         /// <summary>
-        /// Se o ProjectViewer vê o detalhe de atividades (itens) no histórico.
-        /// Null = true (padrão).
+        /// Se o ProjectViewer vê também atividades/áreas não realizadas.
+        /// Null/false = só o que foi feito.
         /// </summary>
-        public bool? ShowActivitiesToClient { get; set; }
-
-        /// <summary>
-        /// ItemIds de AreaActivity permitidos na visão do cliente.
-        /// Null = todas. Lista vazia = nenhuma (quando ShowActivitiesToClient).
-        /// </summary>
-        public List<string>? ClientVisibleActivityItemIds { get; set; }
+        public bool? ShowUnperformedActivitiesToClient { get; set; }
 
         /// <summary>
         /// Se o ProjectViewer pode exportar Excel do histórico deste projeto.
