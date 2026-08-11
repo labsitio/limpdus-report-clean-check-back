@@ -28,6 +28,9 @@ namespace LimpidusMongoDB.Application.Contracts.Responses
         /// <summary>Null = todas as atividades do catálogo.</summary>
         public List<string>? ClientVisibleActivityItemIds { get; set; }
 
+        /// <summary>Se o ProjectViewer pode exportar Excel.</summary>
+        public bool AllowExcelExport { get; set; }
+
         /// <summary>Catálogo único de atividades do projeto (AreaActivity items).</summary>
         public List<ClientActivityOptionResponse> AvailableActivities { get; set; } = new();
     }

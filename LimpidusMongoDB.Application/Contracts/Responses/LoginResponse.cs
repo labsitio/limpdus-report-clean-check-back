@@ -34,5 +34,8 @@ namespace LimpidusMongoDB.Application.Contracts.Responses
         /// Admin: null (sem limite). Franqueado/Consultor: 365. ProjectViewer: override do projeto ou 90.
         /// </summary>
         public int? MaxHistoryRangeDays { get; set; }
+
+        /// <summary>ProjectViewer: se pode exportar Excel (config do projeto).</summary>
+        public bool AllowExcelExport { get; set; }
     }
 }
