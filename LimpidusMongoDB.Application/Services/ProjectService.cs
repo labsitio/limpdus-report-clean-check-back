@@ -218,6 +218,7 @@ namespace LimpidusMongoDB.Application.Services
                     return Result.Error(ProjectErrors.Project_Error_NotFound.Description());
 
                 var showActivities = request.ShowActivitiesToClient ?? project.ShowActivitiesToClient ?? true;
+                var allowExcel = request.AllowExcelExport ?? project.AllowExcelExport ?? false;
                 List<string>? visibleIds = project.ClientVisibleActivityItemIds;
                 if (request.UpdateVisibleActivities)
                 {
@@ -232,12 +233,14 @@ namespace LimpidusMongoDB.Application.Services
                     Builders<ProjectEntity>.Update
                         .Set(x => x.MaxHistoryRangeDays, request.MaxHistoryRangeDays)
                         .Set(x => x.ShowActivitiesToClient, showActivities)
+                        .Set(x => x.AllowExcelExport, allowExcel)
                         .Set(x => x.ClientVisibleActivityItemIds, visibleIds));
 
                 await _projectRepository.UpdateOneAsync(project.Id.ToString(), update, cancellationToken);
 
                 project.MaxHistoryRangeDays = request.MaxHistoryRangeDays;
                 project.ShowActivitiesToClient = showActivities;
+                project.AllowExcelExport = allowExcel;
                 project.ClientVisibleActivityItemIds = visibleIds;
 
                 var available = await BuildAvailableActivitiesAsync(legacyId, cancellationToken);
@@ -263,6 +266,7 @@ namespace LimpidusMongoDB.Application.Services
                 DefaultProjectViewerDays = HistoryRangeLimits.ProjectViewerDefaultDays,
                 EffectiveMaxDays = HistoryRangeLimits.EffectiveProjectViewerDays(project.MaxHistoryRangeDays),
                 ShowActivitiesToClient = project.ShowActivitiesToClient ?? true,
+                AllowExcelExport = project.AllowExcelExport ?? false,
                 ClientVisibleActivityItemIds = project.ClientVisibleActivityItemIds,
                 AvailableActivities = available
             };

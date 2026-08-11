@@ -8,6 +8,9 @@ namespace LimpidusMongoDB.Application.Contracts.Requests
         /// <summary>Se omitido, mantém o valor atual.</summary>
         public bool? ShowActivitiesToClient { get; set; }
 
+        /// <summary>Se omitido, mantém o valor atual.</summary>
+        public bool? AllowExcelExport { get; set; }
+
         /// <summary>
         /// ItemIds visíveis ao cliente. Null = todas.
         /// Envie lista vazia para nenhuma atividade visível.

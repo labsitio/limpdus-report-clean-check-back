@@ -37,6 +37,12 @@ namespace LimpidusMongoDB.Application.Data.Entities
         /// </summary>
         public List<string>? ClientVisibleActivityItemIds { get; set; }
 
+        /// <summary>
+        /// Se o ProjectViewer pode exportar Excel do histórico deste projeto.
+        /// Null = false (cliente não exporta por padrão).
+        /// </summary>
+        public bool? AllowExcelExport { get; set; }
+
         public UpdateDefinition<ProjectEntity> GetUpdateDefinition() =>
             Builders<ProjectEntity>.Update
                 .Set(nameof(Name).FirstCharToLowerCase(), Name)
