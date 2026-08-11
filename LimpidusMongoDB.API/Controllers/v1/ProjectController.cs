@@ -78,7 +78,10 @@ namespace LimpidusMongoDB.Api.Controllers.v1
             if (!result.Success)
                 return BadRequest(result);
 
-            if (!_projectAccess.IsAdmin(User) && result.Data is IEnumerable<ProjectResponse> projects)
+            // Admin e Consultor: catálogo completo. Franqueado: só a carteira permitida.
+            if (!_projectAccess.IsAdmin(User)
+                && !_projectAccess.IsConsultor(User)
+                && result.Data is IEnumerable<ProjectResponse> projects)
             {
                 var filtered = projects
                     .Where(p => _projectAccess.CanAccessLegacyProject(User, p.LegacyId))
@@ -173,10 +176,10 @@ namespace LimpidusMongoDB.Api.Controllers.v1
         }
 
         /// <summary>
-        /// PUT override do range maximo de historico do ProjectViewer neste projeto (somente Admin).
+        /// PUT override do range maximo de historico do ProjectViewer neste projeto (Admin / Franqueado / Consultor).
         /// Body: <c>{ "maxHistoryRangeDays": 180 }</c> ou <c>null</c> para voltar ao default 90.
         /// </summary>
-        [Authorize(Policy = AuthPolicies.AdminOnly)]
+        [Authorize(Policy = AuthPolicies.CanExportReports)]
         [HttpPut("legacyId/{legacyId}/history-range")]
         [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(HistoryRangeResponse))]
         [SwaggerResponse((int)HttpStatusCode.Forbidden)]
@@ -186,7 +189,12 @@ namespace LimpidusMongoDB.Api.Controllers.v1
             [FromBody] SetHistoryRangeRequest request,
             CancellationToken cancellationToken)
         {
-            if (!_projectAccess.IsAdmin(User))
+            if (!_projectAccess.CanAccessLegacyProject(User, legacyId))
+                return Forbid();
+
+            if (!_projectAccess.IsAdmin(User)
+                && !_projectAccess.IsFranqueado(User)
+                && !_projectAccess.IsConsultor(User))
                 return Forbid();
 
             var result = await _projectService.SetMaxHistoryRangeDaysAsync(
@@ -194,6 +202,46 @@ namespace LimpidusMongoDB.Api.Controllers.v1
                 request?.MaxHistoryRangeDays,
                 cancellationToken);
 
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// GET configuração de acesso do cliente (dias + atividades) do projeto.
+        /// </summary>
+        [Authorize(Policy = AuthPolicies.CanExportReports)]
+        [HttpGet("legacyId/{legacyId}/client-access")]
+        [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(ClientAccessResponse))]
+        [SwaggerResponse((int)HttpStatusCode.Forbidden)]
+        [SwaggerResponse((int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> GetClientAccess(
+            [FromRoute] int legacyId,
+            CancellationToken cancellationToken)
+        {
+            if (!CanManageClientAccessForProject(legacyId))
+                return Forbid();
+
+            var result = await _projectService.GetClientAccessAsync(legacyId, cancellationToken);
+            return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// PUT configuração de acesso do cliente (dias, mostrar atividades, quais atividades).
+        /// Admin / Consultor: qualquer projeto. Franqueado: só a própria carteira.
+        /// </summary>
+        [Authorize(Policy = AuthPolicies.CanExportReports)]
+        [HttpPut("legacyId/{legacyId}/client-access")]
+        [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(ClientAccessResponse))]
+        [SwaggerResponse((int)HttpStatusCode.Forbidden)]
+        [SwaggerResponse((int)HttpStatusCode.BadRequest)]
+        public async Task<IActionResult> SetClientAccess(
+            [FromRoute] int legacyId,
+            [FromBody] SetClientAccessRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (!CanManageClientAccessForProject(legacyId))
+                return Forbid();
+
+            var result = await _projectService.SetClientAccessAsync(legacyId, request, cancellationToken);
             return result.Success ? Ok(result) : BadRequest(result);
         }
 
@@ -428,6 +476,19 @@ namespace LimpidusMongoDB.Api.Controllers.v1
             var result = await _projectService.SaveAsync(request);
 
             return result.Success ? Ok(result) : BadRequest(result);
+        }
+
+        /// <summary>
+        /// Admin/Consultor: qualquer projeto. Franqueado folha: só carteira (ID_DONO + share).
+        /// </summary>
+        private bool CanManageClientAccessForProject(int legacyId)
+        {
+            if (_projectAccess.IsAdmin(User) || _projectAccess.IsConsultor(User))
+                return true;
+
+            // Franqueado folha (IsFranqueado cobre consultor, mas consultor já retornou acima)
+            return _projectAccess.IsFranqueado(User)
+                && _projectAccess.CanAccessLegacyProject(User, legacyId);
         }
     }
 }
