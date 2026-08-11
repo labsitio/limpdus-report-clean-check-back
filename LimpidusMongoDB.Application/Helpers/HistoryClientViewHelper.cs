@@ -51,12 +51,13 @@ namespace LimpidusMongoDB.Application.Helpers
         }
 
         /// <summary>
-        /// Área só aparece para o cliente se não houver itens ou se todos foram realizados.
+        /// Área só aparece para o cliente se tiver atividades e todas foram realizadas.
+        /// Sem itens (nada para expandir) = não mostra.
         /// </summary>
         public static bool IsFullyCompletedForClient(HistoryAuditResponse row)
         {
             if (row?.Items == null || row.Items.Count == 0)
-                return true;
+                return false;
 
             return row.Items.All(i => i.Performed);
         }
