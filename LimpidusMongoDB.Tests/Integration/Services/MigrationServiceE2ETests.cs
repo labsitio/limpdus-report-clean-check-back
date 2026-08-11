@@ -54,7 +54,10 @@ namespace LimpidusMongoDB.Tests.Integration.Services
 
             // Setup ProjectService real para buscar funcionários do projeto
             var projectRepository = new ProjectRepository(TestContext);
-            _projectService = new ProjectService(projectRepository, new EmployeeRepository(TestContext));
+            _projectService = new ProjectService(
+                projectRepository,
+                new EmployeeRepository(TestContext),
+                _areaActivityRepository);
 
             // Setup EmployeeService real
             var employeeService = new EmployeeService(new EmployeeRepository(TestContext));
