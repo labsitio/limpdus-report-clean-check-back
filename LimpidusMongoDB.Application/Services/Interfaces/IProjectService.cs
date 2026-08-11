@@ -20,5 +20,9 @@ namespace LimpidusMongoDB.Application.Services.Interfaces
         Task<int> GetEffectiveProjectViewerMaxDaysAsync(int legacyId, CancellationToken cancellationToken = default);
 
         Task<Result> SetMaxHistoryRangeDaysAsync(int legacyId, int? maxHistoryRangeDays, CancellationToken cancellationToken = default);
+
+        Task<Result> GetClientAccessAsync(int legacyId, CancellationToken cancellationToken = default);
+
+        Task<Result> SetClientAccessAsync(int legacyId, SetClientAccessRequest request, CancellationToken cancellationToken = default);
     }
 }

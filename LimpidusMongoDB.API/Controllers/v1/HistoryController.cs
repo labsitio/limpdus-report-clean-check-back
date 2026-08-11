@@ -81,10 +81,23 @@ namespace LimpidusMongoDB.Api.Controllers.v1
             if (!result.Success)
                 return BadRequest(result);
 
-            if (!_projectAccess.CanSeeSensitiveHistory(User) && result.Data is HistoryListResponse list && list.Data != null)
+            if (result.Data is HistoryListResponse list && list.Data != null)
             {
-                foreach (var row in list.Data)
-                    row.Justification = null;
+                if (_projectAccess.IsProjectViewer(User))
+                {
+                    var access = await _projectService.GetClientAccessAsync(legacyId, cancellationToken);
+                    var settings = access.Success ? access.Data as ClientAccessResponse : null;
+                    HistoryClientViewHelper.ApplyForProjectViewer(
+                        list,
+                        settings?.ShowActivitiesToClient ?? true,
+                        settings?.ClientVisibleActivityItemIds);
+                }
+
+                if (!_projectAccess.CanSeeSensitiveHistory(User))
+                {
+                    foreach (var row in list.Data)
+                        row.Justification = null;
+                }
             }
 
             return Ok(result);

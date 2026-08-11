@@ -21,9 +21,21 @@ namespace LimpidusMongoDB.Application.Data.Entities
 
         /// <summary>
         /// Override do range máximo de histórico para ProjectViewer (dias).
-        /// Null = default 90. Não entra no GetUpdateDefinition (atualizado só via API Admin).
+        /// Null = default 90. Não entra no GetUpdateDefinition (atualizado só via API de acesso do cliente).
         /// </summary>
         public int? MaxHistoryRangeDays { get; set; }
+
+        /// <summary>
+        /// Se o ProjectViewer vê o detalhe de atividades (itens) no histórico.
+        /// Null = true (padrão).
+        /// </summary>
+        public bool? ShowActivitiesToClient { get; set; }
+
+        /// <summary>
+        /// ItemIds de AreaActivity permitidos na visão do cliente.
+        /// Null = todas. Lista vazia = nenhuma (quando ShowActivitiesToClient).
+        /// </summary>
+        public List<string>? ClientVisibleActivityItemIds { get; set; }
 
         public UpdateDefinition<ProjectEntity> GetUpdateDefinition() =>
             Builders<ProjectEntity>.Update
