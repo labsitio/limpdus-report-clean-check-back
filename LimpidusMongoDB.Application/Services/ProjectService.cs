@@ -14,16 +14,13 @@ namespace LimpidusMongoDB.Application.Services
     {
         private readonly IProjectRepository _projectRepository;
         private readonly IEmployeeRepository _employeeRepository;
-        private readonly IAreaActivityRepository _areaActivityRepository;
 
         public ProjectService(
             IProjectRepository projectRepository,
-            IEmployeeRepository employeeRepository,
-            IAreaActivityRepository areaActivityRepository)
+            IEmployeeRepository employeeRepository)
         {
             _projectRepository = projectRepository;
             _employeeRepository = employeeRepository;
-            _areaActivityRepository = areaActivityRepository;
         }
 
         public async Task<Result> GetAllProjects()
@@ -188,8 +185,7 @@ namespace LimpidusMongoDB.Application.Services
                 if (project == null)
                     return Result.Error(ProjectErrors.Project_Error_NotFound.Description());
 
-                var available = await BuildAvailableActivitiesAsync(legacyId, cancellationToken);
-                return Result.Ok(data: MapClientAccess(project, available));
+                return Result.Ok(data: MapClientAccess(project));
             }
             catch (Exception)
             {
@@ -217,34 +213,25 @@ namespace LimpidusMongoDB.Application.Services
                 if (project == null)
                     return Result.Error(ProjectErrors.Project_Error_NotFound.Description());
 
-                var showActivities = request.ShowActivitiesToClient ?? project.ShowActivitiesToClient ?? true;
+                var showUnperformed =
+                    request.ShowUnperformedActivitiesToClient
+                    ?? project.ShowUnperformedActivitiesToClient
+                    ?? false;
                 var allowExcel = request.AllowExcelExport ?? project.AllowExcelExport ?? false;
-                List<string>? visibleIds = project.ClientVisibleActivityItemIds;
-                if (request.UpdateVisibleActivities)
-                {
-                    visibleIds = request.ClientVisibleActivityItemIds?
-                        .Where(id => !string.IsNullOrWhiteSpace(id))
-                        .Select(id => id.Trim())
-                        .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .ToList();
-                }
 
                 var update = BaseEntity.UpdateDateDefinition(
                     Builders<ProjectEntity>.Update
                         .Set(x => x.MaxHistoryRangeDays, request.MaxHistoryRangeDays)
-                        .Set(x => x.ShowActivitiesToClient, showActivities)
-                        .Set(x => x.AllowExcelExport, allowExcel)
-                        .Set(x => x.ClientVisibleActivityItemIds, visibleIds));
+                        .Set(x => x.ShowUnperformedActivitiesToClient, showUnperformed)
+                        .Set(x => x.AllowExcelExport, allowExcel));
 
                 await _projectRepository.UpdateOneAsync(project.Id.ToString(), update, cancellationToken);
 
                 project.MaxHistoryRangeDays = request.MaxHistoryRangeDays;
-                project.ShowActivitiesToClient = showActivities;
+                project.ShowUnperformedActivitiesToClient = showUnperformed;
                 project.AllowExcelExport = allowExcel;
-                project.ClientVisibleActivityItemIds = visibleIds;
 
-                var available = await BuildAvailableActivitiesAsync(legacyId, cancellationToken);
-                return Result.Ok(data: MapClientAccess(project, available));
+                return Result.Ok(data: MapClientAccess(project));
             }
             catch (Exception)
             {
@@ -254,9 +241,7 @@ namespace LimpidusMongoDB.Application.Services
 
         #region Private methods
 
-        private static ClientAccessResponse MapClientAccess(
-            ProjectEntity project,
-            List<ClientActivityOptionResponse> available)
+        private static ClientAccessResponse MapClientAccess(ProjectEntity project)
         {
             return new ClientAccessResponse
             {
@@ -265,40 +250,10 @@ namespace LimpidusMongoDB.Application.Services
                 MaxHistoryRangeDays = project.MaxHistoryRangeDays,
                 DefaultProjectViewerDays = HistoryRangeLimits.ProjectViewerDefaultDays,
                 EffectiveMaxDays = HistoryRangeLimits.EffectiveProjectViewerDays(project.MaxHistoryRangeDays),
-                ShowActivitiesToClient = project.ShowActivitiesToClient ?? true,
-                AllowExcelExport = project.AllowExcelExport ?? false,
-                ClientVisibleActivityItemIds = project.ClientVisibleActivityItemIds,
-                AvailableActivities = available
+                ShowUnperformedActivitiesToClient = project.ShowUnperformedActivitiesToClient ?? false,
+                AllowExcelExport = project.AllowExcelExport ?? false
             };
         }
-
-        private async Task<List<ClientActivityOptionResponse>> BuildAvailableActivitiesAsync(
-            int legacyId,
-            CancellationToken cancellationToken)
-        {
-            var areas = await _areaActivityRepository.FindAsync(
-                Builders<AreaActivityEntity>.Filter.Eq(x => x.ProjectId, legacyId),
-                cancellationToken);
-
-            return (areas ?? Enumerable.Empty<AreaActivityEntity>())
-                .SelectMany(a => a.Items ?? Enumerable.Empty<AreaActivityItemEntity>())
-                .Where(i => !string.IsNullOrWhiteSpace(i.ItemId) || !string.IsNullOrWhiteSpace(i.Name))
-                .GroupBy(
-                    i => string.IsNullOrWhiteSpace(i.ItemId) ? i.Name.Trim() : i.ItemId.Trim(),
-                    StringComparer.OrdinalIgnoreCase)
-                .Select(g =>
-                {
-                    var first = g.First();
-                    return new ClientActivityOptionResponse
-                    {
-                        ItemId = string.IsNullOrWhiteSpace(first.ItemId) ? first.Name.Trim() : first.ItemId.Trim(),
-                        Name = first.Name?.Trim() ?? first.ItemId?.Trim() ?? string.Empty
-                    };
-                })
-                .OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-        }
-
 
         private async Task<ProjectResponse> GetProjectDetail(ProjectEntity projectEntity)
         {

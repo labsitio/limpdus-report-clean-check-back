@@ -1,0 +1,2055 @@
+[
+  {
+    "id": "",
+    "name": "DML",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "53683",
+    "orderBy": 1,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "7",
+        "name": "Tirar pó de mesas e superficies horizontais.",
+        "orderBy": 7,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "15",
+        "name": "Remover marcas de paredes, portas e divisórias.",
+        "orderBy": 15,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "27",
+        "name": "Mop pó",
+        "orderBy": 27,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "29",
+        "name": "Mop úmido",
+        "orderBy": 29,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "HALL ELEVADORES / RECEPÇÃO",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "64025",
+    "orderBy": 2,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "7",
+        "name": "Tirar pó de mesas e superficies horizontais.",
+        "orderBy": 7,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "27",
+        "name": "Mop pó",
+        "orderBy": 27,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "29",
+        "name": "Mop úmido",
+        "orderBy": 29,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "51",
+        "name": "Limpeza de porta de vidro (*)",
+        "orderBy": 51,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "OPERAÇÕES",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "",
+    "orderBy": 3,
+    "projectId": 4698,
+    "items": []
+  },
+  {
+    "id": "",
+    "name": "RECEPÇÃO",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "64031",
+    "orderBy": 4,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "1",
+        "name": "Esvaziar cesto lixo (sacos)",
+        "orderBy": 1,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "7",
+        "name": "Tirar pó de mesas e superficies horizontais.",
+        "orderBy": 7,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "13",
+        "name": "Limpar pés de cadeiras",
+        "orderBy": 13,
+        "frequency": {
+          "type": "biweekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "17",
+        "name": "Limpeza de telefones",
+        "orderBy": 17,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "22",
+        "name": "Aspirar linhas de tráfego",
+        "orderBy": 22,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      {
+        "id": "24",
+        "name": "Aspiração completa",
+        "orderBy": 24,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "SALA REUNIÃO 1",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "53687",
+    "orderBy": 5,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "1",
+        "name": "Esvaziar cesto lixo (sacos)",
+        "orderBy": 1,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "7",
+        "name": "Tirar pó de mesas e superficies horizontais.",
+        "orderBy": 7,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "13",
+        "name": "Limpar pés de cadeiras",
+        "orderBy": 13,
+        "frequency": {
+          "type": "biweekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "17",
+        "name": "Limpeza de telefones",
+        "orderBy": 17,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "22",
+        "name": "Aspirar linhas de tráfego",
+        "orderBy": 22,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      {
+        "id": "24",
+        "name": "Aspiração completa",
+        "orderBy": 24,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "SALA REUNIÃO 2",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "53689",
+    "orderBy": 6,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "1",
+        "name": "Esvaziar cesto lixo (sacos)",
+        "orderBy": 1,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "7",
+        "name": "Tirar pó de mesas e superficies horizontais.",
+        "orderBy": 7,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "13",
+        "name": "Limpar pés de cadeiras",
+        "orderBy": 13,
+        "frequency": {
+          "type": "biweekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "17",
+        "name": "Limpeza de telefones",
+        "orderBy": 17,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "22",
+        "name": "Aspirar linhas de tráfego",
+        "orderBy": 22,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      {
+        "id": "24",
+        "name": "Aspiração completa",
+        "orderBy": 24,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "SALA REUNIÃO 3",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 40,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "53695",
+    "orderBy": 7,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "1",
+        "name": "Esvaziar cesto lixo (sacos)",
+        "orderBy": 1,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "7",
+        "name": "Tirar pó de mesas e superficies horizontais.",
+        "orderBy": 7,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "13",
+        "name": "Limpar pés de cadeiras",
+        "orderBy": 13,
+        "frequency": {
+          "type": "biweekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "14",
+        "name": "Tirar poeira alta - detalhada",
+        "orderBy": 14,
+        "frequency": {
+          "type": "monthly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        }
+      },
+      {
+        "id": "17",
+        "name": "Limpeza de telefones",
+        "orderBy": 17,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "22",
+        "name": "Aspirar linhas de tráfego",
+        "orderBy": 22,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      {
+        "id": "24",
+        "name": "Aspiração completa",
+        "orderBy": 24,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "86",
+        "name": "Aspirar móveis de escritório(*)",
+        "orderBy": 86,
+        "frequency": {
+          "type": "quarterly",
+          "weekDays": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "SALA TREINAMENTO/UNILIMP",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "53697",
+    "orderBy": 8,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "1",
+        "name": "Esvaziar cesto lixo (sacos)",
+        "orderBy": 1,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "7",
+        "name": "Tirar pó de mesas e superficies horizontais.",
+        "orderBy": 7,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "13",
+        "name": "Limpar pés de cadeiras",
+        "orderBy": 13,
+        "frequency": {
+          "type": "biweekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "22",
+        "name": "Aspirar linhas de tráfego",
+        "orderBy": 22,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      {
+        "id": "24",
+        "name": "Aspiração completa",
+        "orderBy": 24,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "86",
+        "name": "Aspirar móveis de escritório(*)",
+        "orderBy": 86,
+        "frequency": {
+          "type": "quarterly",
+          "weekDays": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "SALÃO",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "64029",
+    "orderBy": 9,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "7",
+        "name": "Tirar pó de mesas e superficies horizontais.",
+        "orderBy": 7,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "15",
+        "name": "Remover marcas de paredes, portas e divisórias.",
+        "orderBy": 15,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "24",
+        "name": "Aspiração completa",
+        "orderBy": 24,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "232",
+        "name": "Limpeza úmida de mesas (*)",
+        "orderBy": 232,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "233",
+        "name": "Limpeza úmida de cadeiras (*)",
+        "orderBy": 233,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "WC COLETIVO FEM",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "63947",
+    "orderBy": 10,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "1",
+        "name": "Esvaziar cesto lixo (sacos)",
+        "orderBy": 1,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "44",
+        "name": "Limpeza completa de WC coletivo (*)",
+        "orderBy": 44,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "WC DIRETORIA",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "63949",
+    "orderBy": 11,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "1",
+        "name": "Esvaziar cesto lixo (sacos)",
+        "orderBy": 1,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "45",
+        "name": "Limpeza completa de WC individual (*)",
+        "orderBy": 45,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "WC FEM 1",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "63941",
+    "orderBy": 12,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "1",
+        "name": "Esvaziar cesto lixo (sacos)",
+        "orderBy": 1,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "45",
+        "name": "Limpeza completa de WC individual (*)",
+        "orderBy": 45,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "WC MASC 1",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "63943",
+    "orderBy": 13,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "1",
+        "name": "Esvaziar cesto lixo (sacos)",
+        "orderBy": 1,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "45",
+        "name": "Limpeza completa de WC individual (*)",
+        "orderBy": 45,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "WC MASC 2",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "",
+    "orderBy": 14,
+    "projectId": 4698,
+    "items": []
+  },
+  {
+    "id": "",
+    "name": "COMERCIAL / MARKETING",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "63951",
+    "orderBy": 15,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "1",
+        "name": "Esvaziar cesto lixo (sacos)",
+        "orderBy": 1,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "7",
+        "name": "Tirar pó de mesas e superficies horizontais.",
+        "orderBy": 7,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "13",
+        "name": "Limpar pés de cadeiras",
+        "orderBy": 13,
+        "frequency": {
+          "type": "biweekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "15",
+        "name": "Remover marcas de paredes, portas e divisórias.",
+        "orderBy": 15,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "17",
+        "name": "Limpeza de telefones",
+        "orderBy": 17,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "22",
+        "name": "Aspirar linhas de tráfego",
+        "orderBy": 22,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      {
+        "id": "24",
+        "name": "Aspiração completa",
+        "orderBy": 24,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "52",
+        "name": "Limpeza de divisória de vidro",
+        "orderBy": 52,
+        "frequency": {
+          "type": "biweekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "232",
+        "name": "Limpeza úmida de mesas (*)",
+        "orderBy": 232,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "COMERCIAL / MARKETING",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "63953",
+    "orderBy": 16,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "1",
+        "name": "Esvaziar cesto lixo (sacos)",
+        "orderBy": 1,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "7",
+        "name": "Tirar pó de mesas e superficies horizontais.",
+        "orderBy": 7,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "13",
+        "name": "Limpar pés de cadeiras",
+        "orderBy": 13,
+        "frequency": {
+          "type": "biweekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "15",
+        "name": "Remover marcas de paredes, portas e divisórias.",
+        "orderBy": 15,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "17",
+        "name": "Limpeza de telefones",
+        "orderBy": 17,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "22",
+        "name": "Aspirar linhas de tráfego",
+        "orderBy": 22,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      {
+        "id": "24",
+        "name": "Aspiração completa",
+        "orderBy": 24,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "232",
+        "name": "Limpeza úmida de mesas (*)",
+        "orderBy": 232,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "BANHEIROS LADO DIREITO",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "64033",
+    "orderBy": 17,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "19",
+        "name": "Limpeza de pias (*)",
+        "orderBy": 19,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "29",
+        "name": "Mop úmido",
+        "orderBy": 29,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "COPA",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "53685",
+    "orderBy": 18,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "27",
+        "name": "Mop pó",
+        "orderBy": 27,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "29",
+        "name": "Mop úmido",
+        "orderBy": 29,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "179",
+        "name": "Limpeza de refrigerador (*)",
+        "orderBy": 179,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "222",
+        "name": "Esvaziar lixo (cozinha)",
+        "orderBy": 222,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        }
+      },
+      {
+        "id": "232",
+        "name": "Limpeza úmida de mesas (*)",
+        "orderBy": 232,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "236",
+        "name": "Limpeza de forno microondas (*)",
+        "orderBy": 236,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "CORREDORES",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "64035",
+    "orderBy": 19,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "11",
+        "name": "Tirar poeira baixa",
+        "orderBy": 11,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "22",
+        "name": "Aspirar linhas de tráfego",
+        "orderBy": 22,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "DEPARTAMENTO FINANCEIRO",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "64027",
+    "orderBy": 20,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "7",
+        "name": "Tirar pó de mesas e superficies horizontais.",
+        "orderBy": 7,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "15",
+        "name": "Remover marcas de paredes, portas e divisórias.",
+        "orderBy": 15,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "24",
+        "name": "Aspiração completa",
+        "orderBy": 24,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "",
+    "name": "DIRETORIA",
+    "description": "",
+    "quickTask": false,
+    "totalM2": 0,
+    "employeeId": "COLE_AQUI_OBJECTID_24_HEX_DO_FUNCIONARIO_MONGO",
+    "headerId": "64195",
+    "orderBy": 21,
+    "projectId": 4698,
+    "items": [
+      {
+        "id": "1",
+        "name": "Esvaziar cesto lixo (sacos)",
+        "orderBy": 1,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Levar o lixo coletado",
+        "orderBy": 3,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "7",
+        "name": "Tirar pó de mesas e superficies horizontais.",
+        "orderBy": 7,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "Tirar pó de superficies altas.",
+        "orderBy": 9,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "13",
+        "name": "Limpar pés de cadeiras",
+        "orderBy": 13,
+        "frequency": {
+          "type": "biweekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "17",
+        "name": "Limpeza de telefones",
+        "orderBy": 17,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "20",
+        "name": "Tirar pó de persianas com retentor",
+        "orderBy": 20,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "22",
+        "name": "Aspirar linhas de tráfego",
+        "orderBy": 22,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      {
+        "id": "24",
+        "name": "Aspiração completa",
+        "orderBy": 24,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      {
+        "id": "72",
+        "name": "Tirar poeira de equipamentos",
+        "orderBy": 72,
+        "frequency": {
+          "type": "weekly",
+          "weekDays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      }
+    ]
+  }
+]

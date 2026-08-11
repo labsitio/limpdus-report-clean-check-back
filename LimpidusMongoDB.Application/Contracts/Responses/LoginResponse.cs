@@ -37,5 +37,8 @@ namespace LimpidusMongoDB.Application.Contracts.Responses
 
         /// <summary>ProjectViewer: se pode exportar Excel (config do projeto).</summary>
         public bool AllowExcelExport { get; set; }
+
+        /// <summary>ProjectViewer: se pode ver atividades não realizadas.</summary>
+        public bool ShowUnperformedActivitiesToClient { get; set; }
     }
 }

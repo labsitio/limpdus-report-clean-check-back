@@ -89,8 +89,7 @@ namespace LimpidusMongoDB.Api.Controllers.v1
                     var settings = access.Success ? access.Data as ClientAccessResponse : null;
                     HistoryClientViewHelper.ApplyForProjectViewer(
                         list,
-                        settings?.ShowActivitiesToClient ?? true,
-                        settings?.ClientVisibleActivityItemIds);
+                        settings?.ShowUnperformedActivitiesToClient ?? false);
                 }
 
                 if (!_projectAccess.CanSeeSensitiveHistory(User))

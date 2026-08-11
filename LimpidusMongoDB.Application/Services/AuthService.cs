@@ -292,7 +292,8 @@ namespace LimpidusMongoDB.Application.Services
                 AllowedProjects = allowed,
                 ExpiresAtUtc = expires,
                 MaxHistoryRangeDays = maxHistoryRangeDays,
-                AllowExcelExport = mongoProject?.AllowExcelExport ?? false
+                AllowExcelExport = mongoProject?.AllowExcelExport ?? false,
+                ShowUnperformedActivitiesToClient = mongoProject?.ShowUnperformedActivitiesToClient ?? false
             });
         }
     }
